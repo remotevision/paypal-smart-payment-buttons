@@ -1,7 +1,7 @@
 /* @flow */
 /* eslint max-lines: off */
 
-import { extendUrl, uniqueID, getUserAgent, supportsPopups, memoize, stringifyError, isIos, isAndroid,
+import { extendUrl, getUserAgent, supportsPopups, memoize, stringifyError, isIos, isAndroid,
     isSafari, isChrome, stringifyErrorMessage, cleanup, once, noop } from 'belter/src';
 import { ZalgoPromise } from 'zalgo-promise/src';
 import { PLATFORM, ENV, FPTI_KEY } from '@paypal/sdk-constants/src';
