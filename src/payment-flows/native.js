@@ -1,7 +1,7 @@
 /* @flow */
 /* eslint max-lines: off */
 
-import { extendUrl, getUserAgent, supportsPopups, memoize, stringifyError, isIos, isAndroid,
+import { extendUrl, uniqueID, getUserAgent, supportsPopups, memoize, stringifyError, isIos, isAndroid,
     isSafari, isChrome, stringifyErrorMessage, cleanup, once, noop } from 'belter/src';
 import { ZalgoPromise } from 'zalgo-promise/src';
 import { PLATFORM, ENV, FPTI_KEY } from '@paypal/sdk-constants/src';
@@ -53,6 +53,21 @@ type NativeConnection = {|
     setProps : () => ZalgoPromise<void>,
     close : () => ZalgoPromise<void>
 |};
+
+const fetchId = (() : function => {
+    let id;
+
+    function fetch() : string {
+        if (id) {
+            return id;
+        }
+
+        id = uniqueID();
+        return id;
+    }
+
+    return fetch;
+})();
 
 const getNativeSocket = memoize(({ sessionUID, firebaseConfig, version } : NativeSocketOptions) : MessageSocket => {
     const nativeSocket = firebaseSocket({
@@ -604,7 +619,7 @@ function initNative({ props, components, config, payment, serviceData } : InitOp
 
     const click = () => {
         return ZalgoPromise.try(() => {
-            const sessionUID = buttonSessionID;
+            const sessionUID = fetchId();
             return useDirectAppSwitch() ? initDirectAppSwitch({ sessionUID }) : initPopupAppSwitch({ sessionUID });
         }).catch(err => {
             return close().then(() => {
