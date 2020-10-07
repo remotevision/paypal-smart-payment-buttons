@@ -54,20 +54,7 @@ type NativeConnection = {|
     close : () => ZalgoPromise<void>
 |};
 
-const fetchId = (() : function => {
-    let id;
-
-    function fetch() : string {
-        if (id) {
-            return id;
-        }
-
-        id = uniqueID();
-        return id;
-    }
-
-    return fetch;
-})();
+const firebaseID = memoize(uniqueID);
 
 const getNativeSocket = memoize(({ sessionUID, firebaseConfig, version } : NativeSocketOptions) : MessageSocket => {
     const nativeSocket = firebaseSocket({
@@ -619,7 +606,7 @@ function initNative({ props, components, config, payment, serviceData } : InitOp
 
     const click = () => {
         return ZalgoPromise.try(() => {
-            const sessionUID = fetchId();
+            const sessionUID = firebaseID();
             return useDirectAppSwitch() ? initDirectAppSwitch({ sessionUID }) : initPopupAppSwitch({ sessionUID });
         }).catch(err => {
             return close().then(() => {
