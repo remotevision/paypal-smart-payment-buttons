@@ -63,12 +63,23 @@ const getNativeSocket = ({ sessionUID, firebaseConfig, version } : NativeSocketO
         config:           firebaseConfig
     });
     nativeSocket.onError(err => {
-        getLogger().error('native_socket_error', { err: stringifyError(err) })
-            .track({
-                [FPTI_KEY.STATE]:           FPTI_STATE.BUTTON,
-                [FPTI_KEY.TRANSITION]:      FPTI_TRANSITION.NATIVE_APP_SWITCH_ACK,
-                [FTPI_CUSTOM_KEY.ERR_DESC]: `[Native Socket Error] ${ stringifyError(err) }`
-            }).flush();
+        const stringifiedError = stringifyError(err);
+        if (stringifiedError.indexOf('permission_denied') !== -1) {
+            getLogger()
+                .info('firebase_connection_reinitialized', { sessionUID })
+                .track({
+                    [FPTI_KEY.STATE]:           FPTI_STATE.BUTTON,
+                    [FPTI_KEY.TRANSITION]:      FPTI_TRANSITION.NATIVE_APP_SWITCH_ACK,
+                    [FTPI_CUSTOM_KEY.ERR_DESC]: `[Native Socket Info] ${ stringifiedError }`
+                }).flush();
+        } else {
+            getLogger().error('native_socket_error', { err: stringifiedError })
+                .track({
+                    [FPTI_KEY.STATE]:           FPTI_STATE.BUTTON,
+                    [FPTI_KEY.TRANSITION]:      FPTI_TRANSITION.NATIVE_APP_SWITCH_ACK,
+                    [FTPI_CUSTOM_KEY.ERR_DESC]: `[Native Socket Error] ${ stringifiedError }`
+                }).flush();
+        }
     });
 
     return nativeSocket;

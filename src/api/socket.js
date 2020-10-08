@@ -457,7 +457,9 @@ type FirebaseSDK = {|
                 // eslint-disable-next-line no-undef
                 set : <T>(T) => void,
                 // eslint-disable-next-line no-undef
-                on : <T>('value', (T) => void, (Error) => void) => void
+                on : <T>('value', (T) => void, (Error) => void) => void,
+                off : Function,
+                remove : Function
             |},
             goOnline : () => void,
             goOffline : () => void
@@ -508,8 +510,22 @@ export function firebaseSocket({ sessionUID, config, sourceApp, sourceAppVersion
             firebase:     loadFirebaseSDK(config),
             sessionToken: getFirebaseSessionToken(sessionUID)
         }).then(({ firebase, sessionToken }) => {
+            const valueCallback = (res) => {
+                const messages = res.val() || {};
+
+                for (const messageID of Object.keys(messages)) {
+                    const message = messages[messageID];
+                    for (const handler of onMessageHandlers) {
+                        handler(message);
+                    }
+                }
+            };
+
             const user = firebase.auth().currentUser;
             if (user) {
+                const uid = user.uid;
+                firebase.database().ref(`users/${ uid }/messages`).off('value', valueCallback);
+                firebase.database().ref(`users/${ uid }/messages`).remove();
                 firebase.auth().signOut();
             }
 
@@ -528,15 +544,7 @@ export function firebaseSocket({ sessionUID, config, sourceApp, sourceAppVersion
                     handler();
                 }
 
-                database.ref(`users/${ sessionUID }/messages`).on('value', (res) => {
-                    const messages = res.val() || {};
-                    for (const messageID of Object.keys(messages)) {
-                        const message = messages[messageID];
-                        for (const handler of onMessageHandlers) {
-                            handler(message);
-                        }
-                    }
-                }, err => {
+                database.ref(`users/${ sessionUID }/messages`).on('value', valueCallback, err => {
                     error(err);
                 });
 
