@@ -444,7 +444,9 @@ export type FirebaseSocketOptions = {|
 type FirebaseSDK = {|
     initializeApp : (FirebaseConfig) => void,
     auth : () => {|
-        signInWithCustomToken : (string) => ZalgoPromise<void>
+        currentUser : Object,
+        signInWithCustomToken : (string) => ZalgoPromise<void>,
+        signOut : Function
     |},
     database : {|
         INTERNAL : {|
@@ -506,6 +508,11 @@ export function firebaseSocket({ sessionUID, config, sourceApp, sourceAppVersion
             firebase:     loadFirebaseSDK(config),
             sessionToken: getFirebaseSessionToken(sessionUID)
         }).then(({ firebase, sessionToken }) => {
+            const user = firebase.auth().currentUser;
+            if (user) {
+                firebase.auth().signOut();
+            }
+
             return firebase.auth().signInWithCustomToken(sessionToken).then(() => {
                 const database = firebase.database();
                 firebase.database.INTERNAL.forceWebSockets();
@@ -520,7 +527,7 @@ export function firebaseSocket({ sessionUID, config, sourceApp, sourceAppVersion
                 for (const handler of onOpenHandlers) {
                     handler();
                 }
-    
+
                 database.ref(`users/${ sessionUID }/messages`).on('value', (res) => {
                     const messages = res.val() || {};
                     for (const messageID of Object.keys(messages)) {

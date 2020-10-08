@@ -54,9 +54,7 @@ type NativeConnection = {|
     close : () => ZalgoPromise<void>
 |};
 
-const firebaseID = memoize(uniqueID);
-
-const getNativeSocket = memoize(({ sessionUID, firebaseConfig, version } : NativeSocketOptions) : MessageSocket => {
+const getNativeSocket = ({ sessionUID, firebaseConfig, version } : NativeSocketOptions) : MessageSocket => {
     const nativeSocket = firebaseSocket({
         sessionUID,
         sourceApp:        SOURCE_APP,
@@ -74,7 +72,7 @@ const getNativeSocket = memoize(({ sessionUID, firebaseConfig, version } : Nativ
     });
 
     return nativeSocket;
-});
+};
 
 function isIOSSafari() : boolean {
     return isIos() && isSafari();
@@ -330,7 +328,7 @@ function initNative({ props, components, config, payment, serviceData } : InitOp
             sessionUID, firebaseConfig, version
         });
 
-        const setNativeProps = memoize(() => {
+        const setNativeProps = () => {
             return getSDKProps().then(sdkProps => {
                 getLogger().info(`native_message_setprops`).flush();
                 instrumentNativeSDKProps(sdkProps);
@@ -346,7 +344,7 @@ function initNative({ props, components, config, payment, serviceData } : InitOp
                     [FTPI_CUSTOM_KEY.ERR_DESC]: stringifyError(err)
                 }).flush();
             });
-        });
+        };
 
         const closeNative = memoize(() => {
             getLogger().info(`native_message_close`).flush();
@@ -606,7 +604,8 @@ function initNative({ props, components, config, payment, serviceData } : InitOp
 
     const click = () => {
         return ZalgoPromise.try(() => {
-            const sessionUID = firebaseID();
+            const sessionUID = uniqueID();
+
             return useDirectAppSwitch() ? initDirectAppSwitch({ sessionUID }) : initPopupAppSwitch({ sessionUID });
         }).catch(err => {
             return close().then(() => {
