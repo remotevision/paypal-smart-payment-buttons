@@ -54,7 +54,7 @@ type NativeConnection = {|
     close : () => ZalgoPromise<void>
 |};
 
-const getNativeSocket = ({ sessionUID, firebaseConfig, version } : NativeSocketOptions) : MessageSocket => {
+const getNativeSocket = memoize({ sessionUID, firebaseConfig, version } : NativeSocketOptions) : MessageSocket => {
     const nativeSocket = firebaseSocket({
         sessionUID,
         sourceApp:        SOURCE_APP,
@@ -83,7 +83,7 @@ const getNativeSocket = ({ sessionUID, firebaseConfig, version } : NativeSocketO
     });
 
     return nativeSocket;
-};
+});
 
 function isIOSSafari() : boolean {
     return isIos() && isSafari();
