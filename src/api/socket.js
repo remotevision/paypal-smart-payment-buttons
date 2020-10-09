@@ -526,10 +526,7 @@ export function firebaseSocket({ sessionUID, config, sourceApp, sourceAppVersion
                 const uid = user.uid;
 
                 firebase.database().ref(`users/${ uid }/messages`).off('value', valueCallback);
-                firebase.database().ref(`users/${ uid }/messages`).remove()
-                    .finally(() => {
-                        firebase.auth().signOut();
-                    });
+                firebase.database().ref(`users/${ uid }/messages`).remove();
             }
 
             return firebase.auth().signInWithCustomToken(sessionToken).then(() => {
