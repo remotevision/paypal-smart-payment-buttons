@@ -526,9 +526,7 @@ export function firebaseSocket({ sessionUID, config, sourceApp, sourceAppVersion
                 const uid = user.uid;
                 firebase.database().ref(`users/${ uid }/messages`).off('value', valueCallback);
                 firebase.database().ref(`users/${ uid }/messages`).remove()
-                    .then(() => {
-                        firebase.auth().signOut();
-                    }).catch(() => {
+                    .finally(() => {
                         firebase.auth().signOut();
                     });
             }
