@@ -524,6 +524,7 @@ export function firebaseSocket({ sessionUID, config, sourceApp, sourceAppVersion
             const user = firebase.auth().currentUser;
             if (user) {
                 const uid = user.uid;
+
                 firebase.database().ref(`users/${ uid }/messages`).off('value', valueCallback);
                 firebase.database().ref(`users/${ uid }/messages`).remove()
                     .finally(() => {
