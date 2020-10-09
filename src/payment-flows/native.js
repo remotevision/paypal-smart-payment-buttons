@@ -54,7 +54,7 @@ type NativeConnection = {|
     close : () => ZalgoPromise<void>
 |};
 
-const getNativeSocket = memoize({ sessionUID, firebaseConfig, version } : NativeSocketOptions) : MessageSocket => {
+const getNativeSocket = memoize(({ sessionUID, firebaseConfig, version } : NativeSocketOptions) : MessageSocket => {
     const nativeSocket = firebaseSocket({
         sessionUID,
         sourceApp:        SOURCE_APP,
