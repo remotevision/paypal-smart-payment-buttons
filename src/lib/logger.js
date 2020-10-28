@@ -58,7 +58,8 @@ export function setupLogger({ env, sessionID, clientID, partnerAttributionID, co
             [FPTI_KEY.SDK_VERSION]:            version,
             [FPTI_KEY.USER_AGENT]:             window.navigator && window.navigator.userAgent,
             [FPTI_KEY.USER_ACTION]:            commit ? FPTI_USER_ACTION.COMMIT : FPTI_USER_ACTION.CONTINUE,
-            [FPTI_KEY.CONTEXT_CORRID]:         sdkCorrelationID
+            [FPTI_KEY.CONTEXT_CORRID]:         sdkCorrelationID,
+            t:                                 Date.now().toString()
         };
     });
 
