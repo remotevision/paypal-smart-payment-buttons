@@ -444,7 +444,6 @@ export type FirebaseSocketOptions = {|
 type FirebaseSDK = {|
     initializeApp : (FirebaseConfig) => void,
     auth : () => {|
-        currentUser : Object,
         signInWithCustomToken : (string) => ZalgoPromise<void>,
         signOut : Function
     |},
