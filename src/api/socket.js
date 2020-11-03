@@ -444,8 +444,7 @@ export type FirebaseSocketOptions = {|
 type FirebaseSDK = {|
     initializeApp : (FirebaseConfig) => void,
     auth : () => {|
-        signInWithCustomToken : (string) => ZalgoPromise<void>,
-        signOut : Function
+        signInWithCustomToken : (string) => ZalgoPromise<void>
     |},
     database : {|
         INTERNAL : {|
@@ -456,9 +455,7 @@ type FirebaseSDK = {|
                 // eslint-disable-next-line no-undef
                 set : <T>(T) => void,
                 // eslint-disable-next-line no-undef
-                on : <T>('value', (T) => void, (Error) => void) => void,
-                off : Function,
-                remove : Function
+                on : <T>('value', (T) => void, (Error) => void) => void
             |},
             goOnline : () => void,
             goOffline : () => void
