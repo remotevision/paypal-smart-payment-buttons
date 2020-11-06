@@ -95,6 +95,9 @@ export const FPTI_TRANSITION = {
     CLICK_CHOOSE_ACCOUNT:     ('process_click_pay_with_different_account' : 'process_click_pay_with_different_account'),
     CLICK_UNLINK_ACCOUNT:     ('process_click_unlink_account' : 'process_click_unlink_account'),
 
+    INSTALLMENTS_ELIGIBLE:    ('installments_eligible' : 'installments_eligible'),
+    INSTALLMENTS_INELIGIBLE:  ('installments_ineligible' : 'installments_ineligible'),
+
     CREATE_ORDER:             ('process_create_order' : 'process_create_order'),
     RECEIVE_ORDER:            ('process_receive_order' : 'process_receive_order'),
     CREATE_PAYMENT:           ('process_create_payment' : 'process_create_payment'),
@@ -130,7 +133,8 @@ export const FTPI_CUSTOM_KEY = {
     HONEY_DEVICE_ID:       ('honey_device_id' : 'honey_device_id'),
     HONEY_SESSION_ID:      ('honey_session_id' : 'honey_session_id'),
     INTEGRATION_ISSUE:     ('integration_issue' : 'integration_issue'),
-    INTEGRATION_WHITELIST: ('whitelist' : 'whitelist')
+    INTEGRATION_WHITELIST: ('whitelist' : 'whitelist'),
+    INFO_MSG:              ('info_msg' : 'info_msg')
 };
 
 export const FPTI_BUTTON_KEY = {

@@ -57,21 +57,43 @@ export const defaultLogger : LoggerType = {
     error: (req : ExpressRequest, ...args : $ReadOnlyArray<mixed>) => console.error(...args) // eslint-disable-line no-console
 };
 
+const registerDirs = [];
+
 export function babelRegister(dir : string) {
+    if (registerDirs.indexOf(dir) === -1) {
+        registerDirs.push(dir);
+    }
+
     require('@babel/register')({
         only: [
             (path) => {
-                return (path.indexOf(dir) === 0 && path.indexOf('/node_modules/') === -1);
+                for (const registerDir of registerDirs) {
+                    if (path.indexOf(registerDir) === 0 && path.slice(registerDir.length).indexOf('/node_modules/') === -1) {
+                        return true;
+                    }
+                }
+                return false;
             }
         ]
     });
 }
 
-export function babelRequire<T>(path : string) : T {
-    babelRegister(dirname(path));
-    
+export function resolveScript(path : string) : ?string {
+    try {
+        return require.resolve(path);
+    } catch (err) {
+        // pass
+    }
+}
+
+export function dynamicRequire<T>(path : string) : T {
     // $FlowFixMe
     return require(path); // eslint-disable-line security/detect-non-literal-require
+}
+
+export function babelRequire<T>(path : string) : T {
+    babelRegister(dirname(path));
+    return dynamicRequire(path);
 }
 
 export async function compileWebpack(config : Object, context : string) : Promise<string> {
