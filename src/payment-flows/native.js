@@ -485,7 +485,7 @@ function initNative({ props, components, config, payment, serviceData } : InitOp
             return onClick ? onClick({ fundingSource }) : true;
         });
     });
-    
+
     const popup = memoize((url : string) => {
         const win = window.open(url);
         clean.register(() => {
