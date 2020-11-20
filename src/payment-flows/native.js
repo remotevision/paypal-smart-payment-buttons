@@ -20,8 +20,6 @@ import { checkout } from './checkout';
 const SOURCE_APP = 'paypal_smart_payment_buttons';
 const TARGET_APP = 'paypal_native_checkout';
 
-const NATIVE_CACHED_POPUP = '__native_popup__';
-
 const POST_MESSAGE = {
     AWAIT_REDIRECT:     'awaitRedirect',
     DETECT_APP_SWITCH:  'detectAppSwitch',
