@@ -248,7 +248,12 @@ function initNative({ props, components, config, payment, serviceData } : InitOp
         throw new Error(`Can not run native flow without firebase config`);
     }
 
-    const clean = cleanup();
+    if (window.clean) {
+        window.clean.all();
+    }
+
+    const clean = window.clean = cleanup();
+
     let approved = false;
     let cancelled = false;
     let didFallback = false;
@@ -482,11 +487,6 @@ function initNative({ props, components, config, payment, serviceData } : InitOp
     });
     
     const popup = memoize((url : string) => {
-        const existingPopup = window.__native_xo_popup__;
-        if (existingPopup) {
-            existingPopup.close();
-        }
-
         const win = window.open(url);
         clean.register(() => {
             if (win && !isWindowClosed(win)) {
@@ -494,7 +494,6 @@ function initNative({ props, components, config, payment, serviceData } : InitOp
             }
         });
 
-        window.__native_xo_popup__ = win;
         return win;
     });
 
@@ -502,7 +501,11 @@ function initNative({ props, components, config, payment, serviceData } : InitOp
         const nativeUrl = getNativeUrlForAndroid({ sessionUID });
 
         const nativeWin = popup(nativeUrl);
-        window.addEventListener('unload', close);
+
+        const closePopup = () => {
+            nativeWin.close();
+        };
+        window.addEventListener('pagehide', closePopup);
         
         getLogger()
             .info(`native_attempt_appswitch_popup_shown`, { url: nativeUrl })
@@ -554,7 +557,11 @@ function initNative({ props, components, config, payment, serviceData } : InitOp
 
     const initPopupAppSwitch = ({ sessionUID } : {| sessionUID : string |}) => {
         const popupWin = popup(getNativePopupUrl({ sessionUID }));
-        window.addEventListener('unload', close);
+        
+        const closePopup = () => {
+            popupWin.close();
+        };
+        window.addEventListener('pagehide', closePopup);
 
         getLogger().info(`native_attempt_appswitch_popup_shown`)
             .track({
