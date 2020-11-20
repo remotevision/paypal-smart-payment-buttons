@@ -281,14 +281,13 @@ function initNative({ props, components, config, payment, serviceData } : InitOp
     });
 
     const getNativePopupDomain = memoize(() : string => {
-        // if (env === ENV.SANDBOX && window.xprops && window.xprops.useCorrectNativeSandboxDomain) {
-        //     return 'https://history.paypal.com';
-        // }
+        if (env === ENV.SANDBOX && window.xprops && window.xprops.useCorrectNativeSandboxDomain) {
+            return 'https://history.paypal.com';
+        }
 
-        // return (env === ENV.SANDBOX)
-        //     ? NATIVE_POPUP_DOMAIN_SANDBOX
-        //     : NATIVE_POPUP_DOMAIN;
-        return 'http://localhost.paypal.com:8001';
+        return (env === ENV.SANDBOX)
+            ? NATIVE_POPUP_DOMAIN_SANDBOX
+            : NATIVE_POPUP_DOMAIN;
     });
 
     const getNativeUrlForAndroid = memoize(({ pageUrl = initialPageUrl, sessionUID } = {}) : string => {
