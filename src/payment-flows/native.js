@@ -47,6 +47,8 @@ const NATIVE_DOMAIN_SANDBOX = 'https://www.paypal.com';
 const NATIVE_POPUP_DOMAIN = 'https://history.paypal.com';
 const NATIVE_POPUP_DOMAIN_SANDBOX = 'https://www.sandbox.paypal.com';
 
+let clean;
+
 type NativeSocketOptions = {|
     sessionUID : string,
     firebaseConfig : FirebaseConfig,
@@ -248,11 +250,11 @@ function initNative({ props, components, config, payment, serviceData } : InitOp
         throw new Error(`Can not run native flow without firebase config`);
     }
 
-    if (window.clean) {
-        window.clean.all();
+    if (clean) {
+        clean.all();
     }
 
-    const clean = window.clean = cleanup();
+    clean = cleanup();
 
     let approved = false;
     let cancelled = false;
