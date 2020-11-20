@@ -20,6 +20,8 @@ import { checkout } from './checkout';
 const SOURCE_APP = 'paypal_smart_payment_buttons';
 const TARGET_APP = 'paypal_native_checkout';
 
+const NATIVE_CACHED_POPUP = '__native_popup__';
+
 const POST_MESSAGE = {
     AWAIT_REDIRECT:     'awaitRedirect',
     DETECT_APP_SWITCH:  'detectAppSwitch',
@@ -279,13 +281,14 @@ function initNative({ props, components, config, payment, serviceData } : InitOp
     });
 
     const getNativePopupDomain = memoize(() : string => {
-        if (env === ENV.SANDBOX && window.xprops && window.xprops.useCorrectNativeSandboxDomain) {
-            return 'https://history.paypal.com';
-        }
+        // if (env === ENV.SANDBOX && window.xprops && window.xprops.useCorrectNativeSandboxDomain) {
+        //     return 'https://history.paypal.com';
+        // }
 
-        return (env === ENV.SANDBOX)
-            ? NATIVE_POPUP_DOMAIN_SANDBOX
-            : NATIVE_POPUP_DOMAIN;
+        // return (env === ENV.SANDBOX)
+        //     ? NATIVE_POPUP_DOMAIN_SANDBOX
+        //     : NATIVE_POPUP_DOMAIN;
+        return 'http://localhost.paypal.com:8001';
     });
 
     const getNativeUrlForAndroid = memoize(({ pageUrl = initialPageUrl, sessionUID } = {}) : string => {
@@ -480,8 +483,13 @@ function initNative({ props, components, config, payment, serviceData } : InitOp
             return onClick ? onClick({ fundingSource }) : true;
         });
     });
-
+    
     const popup = memoize((url : string) => {
+        const existingPopup = window.__native_xo_popup__;
+        if (existingPopup) {
+            existingPopup.close();
+        }
+
         const win = window.open(url);
         clean.register(() => {
             if (win && !isWindowClosed(win)) {
@@ -489,6 +497,7 @@ function initNative({ props, components, config, payment, serviceData } : InitOp
             }
         });
 
+        window.__native_xo_popup__ = win;
         return win;
     });
 
@@ -496,9 +505,7 @@ function initNative({ props, components, config, payment, serviceData } : InitOp
         const nativeUrl = getNativeUrlForAndroid({ sessionUID });
 
         const nativeWin = popup(nativeUrl);
-        window.addEventListener('unload', () => {
-            nativeWin.close();
-        });
+        window.addEventListener('unload', close);
         
         getLogger()
             .info(`native_attempt_appswitch_popup_shown`, { url: nativeUrl })
@@ -550,9 +557,7 @@ function initNative({ props, components, config, payment, serviceData } : InitOp
 
     const initPopupAppSwitch = ({ sessionUID } : {| sessionUID : string |}) => {
         const popupWin = popup(getNativePopupUrl({ sessionUID }));
-        window.addEventListener('unload', () => {
-            popupWin.close();
-        });
+        window.addEventListener('unload', close);
 
         getLogger().info(`native_attempt_appswitch_popup_shown`)
             .track({
