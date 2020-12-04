@@ -47,6 +47,8 @@ const NATIVE_DOMAIN_SANDBOX = 'https://www.paypal.com';
 const NATIVE_POPUP_DOMAIN = 'https://history.paypal.com';
 const NATIVE_POPUP_DOMAIN_SANDBOX = 'https://www.sandbox.paypal.com';
 
+let clean;
+
 type NativeSocketOptions = {|
     sessionUID : string,
     firebaseConfig : FirebaseConfig,
@@ -248,7 +250,12 @@ function initNative({ props, components, config, payment, serviceData } : InitOp
         throw new Error(`Can not run native flow without firebase config`);
     }
 
-    const clean = cleanup();
+    if (clean) {
+        clean.all();
+    }
+
+    clean = cleanup();
+
     let approved = false;
     let cancelled = false;
     let didFallback = false;
@@ -396,7 +403,7 @@ function initNative({ props, components, config, payment, serviceData } : InitOp
                     });
                 }
             };
-            return onShippingChange(data, actions).then(() => {
+            return onShippingChange({ ...data, forceRestAPI: true }, actions).then(() => {
                 return {
                     resolved
                 };
@@ -496,6 +503,12 @@ function initNative({ props, components, config, payment, serviceData } : InitOp
         const nativeUrl = getNativeUrlForAndroid({ sessionUID });
 
         const nativeWin = popup(nativeUrl);
+
+        const closePopup = () => {
+            nativeWin.close();
+        };
+        window.addEventListener('pagehide', closePopup);
+        
         getLogger()
             .info(`native_attempt_appswitch_popup_shown`, { url: nativeUrl })
             .info(`native_attempt_appswitch_url_popup`, { url: nativeUrl })
@@ -546,6 +559,12 @@ function initNative({ props, components, config, payment, serviceData } : InitOp
 
     const initPopupAppSwitch = ({ sessionUID } : {| sessionUID : string |}) => {
         const popupWin = popup(getNativePopupUrl({ sessionUID }));
+        
+        const closePopup = () => {
+            popupWin.close();
+        };
+        window.addEventListener('pagehide', closePopup);
+
         getLogger().info(`native_attempt_appswitch_popup_shown`)
             .track({
                 [FPTI_KEY.STATE]:      FPTI_STATE.BUTTON,
