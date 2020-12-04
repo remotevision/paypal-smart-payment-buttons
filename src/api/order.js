@@ -37,7 +37,6 @@ type OrderAPIOptions = {|
 
 export function createOrderID(order : OrderCreateRequest, { facilitatorAccessToken, partnerAttributionID } : OrderAPIOptions) : ZalgoPromise<string> {
     getLogger().info(`rest_api_create_order_id`);
-
     return callRestAPI({
         accessToken: facilitatorAccessToken,
         method:      `post`,
@@ -484,5 +483,40 @@ export function updateButtonClientConfig({ orderID, fundingSource, inline = fals
         integrationArtifact: INTEGRATION_ARTIFACT.PAYPAL_JS_SDK,
         userExperienceFlow:  inline ? USER_EXPERIENCE_FLOW.INLINE : USER_EXPERIENCE_FLOW.INCONTEXT,
         productFlow:         PRODUCT_FLOW.SMART_PAYMENT_BUTTONS
+    });
+}
+
+export function payWithNonce({ token, nonce, clientID } : {| token : string, nonce : string, clientID: string |}) : ZalgoPromise<mixed> {
+    return callGraphQL({
+        name:  'approvePaymentWithNonce',
+        query: `
+            mutation ApprovePaymentWithNonce(
+                $token : String!
+                $clientID : String!
+                $nonce: String!
+            ) {
+                approvePaymentWithNonce(
+                    token: $token
+                    clientId: $clientID
+                    nonce: $nonce
+                ) {
+                    cart {
+                        cartId
+                    }
+                }
+            }
+        `,
+        variables: {
+            token,
+            clientID,
+            nonce
+        },
+        headers: {
+            [ HEADERS.CLIENT_CONTEXT ]: token
+        }
+    }).then( data => {
+        // TODO: what values do we want to send back?
+        console.log('Data from paywithNonce', data)
+        return data;
     });
 }
