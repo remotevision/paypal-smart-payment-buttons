@@ -83,7 +83,7 @@ export type ButtonXProps = {|
     enableFunding : ?$ReadOnlyArray<$Values<typeof FUNDING>>,
     disableCard : ?$ReadOnlyArray<$Values<typeof CARD>>,
     getQueriedEligibleFunding? : GetQueriedEligibleFunding,
-    fundingPaymentNonce: string,
+    fundingPaymentNonce : string,
 
     stageHost : ?string,
     apiStageHost : ?string,
@@ -266,17 +266,19 @@ export function getProps({ facilitatorAccessToken } : {| facilitatorAccessToken 
     const onShippingChange = getOnShippingChange({ onShippingChange: xprops.onShippingChange, partnerAttributionID, upgradeLSAT }, { facilitatorAccessToken, createOrder });
     const onAuth = getOnAuth({ facilitatorAccessToken, createOrder, upgradeLSAT });
 
-    //TODO: this should move to its own getFundingPaymentNonce
+    // eslint-disable-next-line no-warning-comments
+    // TODO: this should move to its own getFundingPaymentNonce
     const fundingPaymentNonce = xprops.fundingPaymentNonce;
 
-    //TODO: handle click contingencies here. ensure validation is done before passing back createOrder
+    // eslint-disable-next-line no-warning-comments
+    // TODO: handle click contingencies here. ensure validation is done before passing back createOrder
     window.exports = {
-        'name': 'smart-payment-buttons',
-        createOrder: createOrder,
-        onApprove: onApprove,
-        onError: onError,
-        onCancel: onCancel
-    }
+        'name':        'smart-payment-buttons',
+        createOrder,
+        onApprove,
+        onError,
+        onCancel
+    };
 
     return {
         uid,

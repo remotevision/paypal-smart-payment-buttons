@@ -1,17 +1,20 @@
 /* @flow */
 
-import type {PaymentFlow, PaymentFlowInstance} from './types';
+import { ZalgoPromise } from 'zalgo-promise/src';
+
 import { payWithNonce } from '../api';
-import {ZalgoPromise} from "zalgo-promise/src";
+
+import type { PaymentFlow, PaymentFlowInstance } from './types';
 
 function setupNonce() {
-//pass
+// pass
 }
 
 function isNonceEligible({ props }) : boolean {
-    const {fundingPaymentNonce} = props;
+    const { fundingPaymentNonce } = props;
 
-    //TODO: check if this throws error if no fundingpaymentnonce is passed.
+    // eslint-disable-next-line no-warning-comments
+    // TODO: check if this throws error if no fundingpaymentnonce is passed.
     if (!fundingPaymentNonce) {
         return false;
     }
@@ -20,40 +23,38 @@ function isNonceEligible({ props }) : boolean {
 }
 
 function isNoncePaymentEligible({ props }) : boolean {
-    const {fundingPaymentNonce} = props;
+    const { fundingPaymentNonce } = props;
 
-    //TODO: check if this throws error if no fundingpaymentnonce is passed.
-    if(!fundingPaymentNonce || !(fundingPaymentNonce.length > 0)) {
+    // eslint-disable-next-line no-warning-comments
+    // TODO: check if this throws error if no fundingpaymentnonce is passed.
+    if (!fundingPaymentNonce || !(fundingPaymentNonce.length > 0)) {
         return false;
     }
 
     return true;
 }
 
-function initNonce({props, components, payment, serviceData, config}) : PaymentFlowInstance {
-    console.log('props at HONEY', props);
-    console.log('payment at HONEY', payment);
-
-    const {createOrder, fundingPaymentNonce, clientID } = props;
+function initNonce({ props }) : PaymentFlowInstance {
+    const { createOrder, fundingPaymentNonce, clientID } = props;
 
     const start = () => {
-        return createOrder().then( orderID => {
-            return startPaymentWithNonce(orderID,fundingPaymentNonce, clientID );
-        })
-    }
+        return createOrder().then(orderID => {
+            // eslint-disable-next-line no-use-before-define
+            return startPaymentWithNonce(orderID, fundingPaymentNonce, clientID);
+        });
+    };
 
     return {
         start,
         close: () => ZalgoPromise.resolve()
-    }
+    };
 
 }
 
+// eslint-disable-next-line flowtype/no-primitive-constructor-types
 function startPaymentWithNonce(orderID, fundingPaymentNonce, clientID) : String {
 
-    const result = payWithNonce({ token: orderID, nonce: fundingPaymentNonce, clientID });
-    console.log('result from startPaymentWithnonce', result);
-    return result;
+    return payWithNonce({ token: orderID, nonce: fundingPaymentNonce, clientID });
 }
 
 export const nonce : PaymentFlow = {
