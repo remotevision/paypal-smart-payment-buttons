@@ -484,20 +484,19 @@ export function updateButtonClientConfig({ orderID, fundingSource, inline = fals
     });
 }
 
-export function payWithNonce({ orderID, nonce, clientID } : {| orderID : string, nonce : string, clientID : string |}) : ZalgoPromise<mixed> {
+export function payWithNonce({ token, nonce, clientID } : {| token : string, nonce : string, clientID: string |}) : ZalgoPromise<mixed> {
     return callGraphQL({
         name:  'approvePaymentWithNonce',
         query: `
             mutation ApprovePaymentWithNonce(
-                $orderID : String!
+                $token : String!
                 $clientID : String!
                 $nonce: String!
             ) {
                 approvePaymentWithNonce(
-                    orderID: $orderID
-                    clientID: $clientID
+                    token: $token
+                    clientId: $clientID
                     nonce: $nonce
-                    branded: true
                 ) {
                     cart {
                         cartId
@@ -506,15 +505,16 @@ export function payWithNonce({ orderID, nonce, clientID } : {| orderID : string,
             }
         `,
         variables: {
-            orderID,
+            token,
             clientID,
             nonce
         },
         headers: {
-            [ HEADERS.CLIENT_CONTEXT ]: orderID
+            [ HEADERS.CLIENT_CONTEXT ]: token
         }
-    }).then(data => {
-        // eslint-disable-next-line no-console
-        console.log('Data from paywithNonce', data);
+    }).then( data => {
+        // TODO: what values do we want to send back?
+        console.log('Data from paywithNonce', data)
+        return data;
     });
 }
