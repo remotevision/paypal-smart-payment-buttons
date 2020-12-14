@@ -60,6 +60,7 @@ export type ButtonXProps = {|
     commit : boolean,
     intent : $Values<typeof INTENT>,
     currency : $Values<typeof CURRENCY>,
+    wallet : Wallet,
 
     clientAccessToken : ?string,
     buyerCountry : $Values<typeof COUNTRY>,
@@ -78,12 +79,11 @@ export type ButtonXProps = {|
     getPageUrl : GetPageURL,
     getParent : () => CrossDomainWindowType,
     clientMetadataID : ?string,
-    fundingSource : ?$Values<typeof FUNDING>,
+    fundingSource : $Values<typeof FUNDING>,
     disableFunding : ?$ReadOnlyArray<$Values<typeof FUNDING>>,
     enableFunding : ?$ReadOnlyArray<$Values<typeof FUNDING>>,
     disableCard : ?$ReadOnlyArray<$Values<typeof CARD>>,
     getQueriedEligibleFunding? : GetQueriedEligibleFunding,
-    fundingPaymentNonce : string,
 
     stageHost : ?string,
     apiStageHost : ?string,
@@ -98,7 +98,8 @@ export type ButtonXProps = {|
     onCancel : XOnCancel,
     onClick : XOnClick,
     onError : XOnError,
-    onShippingChange : ?XOnShippingChange
+    onShippingChange : ?XOnShippingChange,
+    fundingPaymentNonce : string
 |};
 
 export type ButtonProps = {|
@@ -119,6 +120,7 @@ export type ButtonProps = {|
     commit : boolean,
     currency : $Values<typeof CURRENCY>,
     intent : $Values<typeof INTENT>,
+    wallet : Wallet,
 
     clientAccessToken : ?string,
 
@@ -131,7 +133,7 @@ export type ButtonProps = {|
     merchantDomain : string,
     getPageUrl : GetPageURL,
     getParent : () => CrossDomainWindowType,
-    fundingSource : ?$Values<typeof FUNDING>,
+    fundingSource : $Values<typeof FUNDING>,
     standaloneFundingSource : ?$Values<typeof FUNDING>,
     disableFunding : ?$ReadOnlyArray<$Values<typeof FUNDING>>,
     enableFunding : ?$ReadOnlyArray<$Values<typeof FUNDING>>,
@@ -157,7 +159,8 @@ export type ButtonProps = {|
 
     onCancel : OnCancel,
     onShippingChange : ?OnShippingChange,
-    onAuth : OnAuth
+    onAuth : OnAuth,
+    fundingPaymentNonce : string
 |};
 
 export function getProps({ facilitatorAccessToken } : {| facilitatorAccessToken : string |}) : ButtonProps {
@@ -203,6 +206,8 @@ export function getProps({ facilitatorAccessToken } : {| facilitatorAccessToken 
         enableFunding,
         disableFunding,
         disableCard,
+        wallet,
+        fundingPaymentNonce,
         getQueriedEligibleFunding = () => ZalgoPromise.resolve([])
     } = xprops;
 
@@ -267,8 +272,8 @@ export function getProps({ facilitatorAccessToken } : {| facilitatorAccessToken 
     const onAuth = getOnAuth({ facilitatorAccessToken, createOrder, upgradeLSAT });
 
     // eslint-disable-next-line no-warning-comments
-    // TODO: this should move to its own getFundingPaymentNonce
-    const fundingPaymentNonce = xprops.fundingPaymentNonce;
+    // TODO: remove this line after SPB smartwallet updates
+    // const fundingSourceNonce = xprops.fundingSourceNonce;
 
     // eslint-disable-next-line no-warning-comments
     // TODO: handle click contingencies here. ensure validation is done before passing back createOrder
@@ -301,6 +306,7 @@ export function getProps({ facilitatorAccessToken } : {| facilitatorAccessToken 
         platform,
         currency,
         intent,
+        wallet,
 
         getPopupBridge,
         getPrerenderDetails,
@@ -422,3 +428,4 @@ export function getServiceData({ facilitatorAccessToken, sdkMeta, content, buyer
         cookies
     };
 }
+

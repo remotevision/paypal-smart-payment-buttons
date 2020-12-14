@@ -58,7 +58,7 @@ export function getButtonMiddleware({
 
             const { env, clientID, buttonSessionID, cspNonce, debug, buyerCountry, disableFunding, disableCard, userIDToken, amount,
                 merchantID: sdkMerchantID, currency, intent, commit, vault, clientAccessToken, basicFundingEligibility, locale,
-                clientMetadataID, pageSessionID, correlationID, cookies, enableFunding } = getButtonParams(params, req, res);
+                clientMetadataID, pageSessionID, correlationID, cookies, enableFunding, fundingPaymentNonce } = getButtonParams(params, req, res);
             
             logger.info(req, `button_params`, { params: JSON.stringify(params) });
 
@@ -88,7 +88,7 @@ export function getButtonMiddleware({
 
             const walletPromise = resolveWallet(req, gqlBatch, {
                 logger, clientID, merchantID: sdkMerchantID, buttonSessionID, currency, intent, commit, vault, amount,
-                disableFunding, disableCard, clientAccessToken, buyerCountry, userIDToken
+                disableFunding, disableCard, clientAccessToken, buyerCountry, userIDToken, fundingPaymentNonce
             }).catch(noop);
 
             gqlBatch.flush();

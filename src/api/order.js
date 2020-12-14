@@ -484,7 +484,15 @@ export function updateButtonClientConfig({ orderID, fundingSource, inline = fals
     });
 }
 
-export function payWithNonce({ orderID, nonce, clientID } : {| orderID : string, nonce : string, clientID : string |}) : ZalgoPromise<mixed> {
+// eslint-disable-next-line no-warning-comments
+// TODO: check if nonce needs to be a type of wallet, or directly taken from wallet
+type PayWithNonceOptions = {|
+    orderID : string,
+    nonce : string,
+    clientID : ?string
+|};
+
+export function payWithNonce({ orderID, nonce, clientID } : PayWithNonceOptions) : ZalgoPromise<mixed> {
     return callGraphQL({
         name:  'approvePaymentWithNonce',
         query: `

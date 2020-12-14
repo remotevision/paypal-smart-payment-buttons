@@ -75,7 +75,8 @@ type ButtonParams = {|
     riskData : ?RiskData,
     correlationID : string,
     platform : $Values<typeof PLATFORM>,
-    cookies : string
+    cookies : string,
+    fundingPaymentNonce : string
 |};
 
 function getCSPNonce(res : ExpressResponse) : string {
@@ -198,6 +199,29 @@ function getFundingEligibilityParam(req : ExpressRequest) : FundingEligibilityTy
     };
 }
 
+
+function getFundingPaymentNonce(res : ExpressResponse) : string {
+    let nonce = res.query && res.query.fundingPaymentNonce;
+
+    if (!nonce || typeof nonce !== 'string') {
+        nonce = '';
+    }
+
+    return nonce;
+}
+
+
+function getBranded(res : ExpressResponse) : string {
+    let branded = res.query && res.query.branded;
+
+    // default to branded payments
+    if (!branded || typeof branded !== 'boolean') {
+        branded = true;
+    }
+
+    return branded;
+}
+
 function getRiskDataParam(req : ExpressRequest) : ?RiskData {
     const serializedRiskData = req.query.riskData;
 
@@ -290,6 +314,8 @@ export function getButtonParams(params : ButtonInputParams, req : ExpressRequest
     const buyerCountry = getBuyerCountry(req, params);
 
     const basicFundingEligibility = getFundingEligibilityParam(req);
+    const fundingPaymentNonce = getFundingPaymentNonce(req);
+    const branded = getBranded(req);
     const riskData = getRiskDataParam(req);
     const correlationID = req.correlationId || '';
 
@@ -322,7 +348,9 @@ export function getButtonParams(params : ButtonInputParams, req : ExpressRequest
         clientMetadataID,
         correlationID,
         platform,
-        cookies
+        cookies,
+        fundingPaymentNonce,
+        branded
     };
 }
 
