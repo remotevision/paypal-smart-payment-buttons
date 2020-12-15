@@ -99,7 +99,7 @@ export type ButtonXProps = {|
     onClick : XOnClick,
     onError : XOnError,
     onShippingChange : ?XOnShippingChange,
-    fundingPaymentNonce : string
+    paymentMethodNonce : string
 |};
 
 export type ButtonProps = {|
@@ -160,7 +160,7 @@ export type ButtonProps = {|
     onCancel : OnCancel,
     onShippingChange : ?OnShippingChange,
     onAuth : OnAuth,
-    fundingPaymentNonce : string
+    paymentMethodNonce : string
 |};
 
 export function getProps({ facilitatorAccessToken } : {| facilitatorAccessToken : string |}) : ButtonProps {
@@ -207,7 +207,7 @@ export function getProps({ facilitatorAccessToken } : {| facilitatorAccessToken 
         disableFunding,
         disableCard,
         wallet,
-        fundingPaymentNonce,
+        paymentMethodNonce,
         getQueriedEligibleFunding = () => ZalgoPromise.resolve([])
     } = xprops;
 
@@ -273,7 +273,7 @@ export function getProps({ facilitatorAccessToken } : {| facilitatorAccessToken 
 
     // eslint-disable-next-line no-warning-comments
     // TODO: remove this line after SPB smartwallet updates
-    // const fundingSourceNonce = xprops.fundingSourceNonce;
+    // const paymentMethodNonce = xprops.paymentMethodNonce;
 
     // eslint-disable-next-line no-warning-comments
     // TODO: handle click contingencies here. ensure validation is done before passing back createOrder
@@ -342,7 +342,7 @@ export function getProps({ facilitatorAccessToken } : {| facilitatorAccessToken 
 
         onAuth,
         standaloneFundingSource: fundingSource,
-        fundingPaymentNonce
+        paymentMethodNonce
     };
 }
 

@@ -488,7 +488,7 @@ export function updateButtonClientConfig({ orderID, fundingSource, inline = fals
 // TODO: check if nonce needs to be a type of wallet, or directly taken from wallet
 type PayWithNonceOptions = {|
     orderID : string,
-    nonce : string,
+    nonce : ?string,
     clientID : ?string
 |};
 
@@ -502,7 +502,7 @@ export function payWithNonce({ orderID, nonce, clientID } : PayWithNonceOptions)
                 $nonce: String!
             ) {
                 approvePaymentWithNonce(
-                    orderID: $orderID
+                    token: $orderID
                     clientID: $clientID
                     nonce: $nonce
                     branded: true

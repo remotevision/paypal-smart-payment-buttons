@@ -12,30 +12,25 @@ function setupNonce() {
 }
 
 function isNonceEligible({ props }) : boolean {
-    // eslint-disable-next-line no-console
-    console.log('props', props);
 
-    // eslint-disable-next-line no-warning-comments
-    /* TODO??:  dont think this should come from args. this needs to read from wallet
-    * TODO??: need to make sure branded and token ID are set by smartWallet
+    /*
     * TODO: this can use optional chaining
-    * TODO: check wallet has a nonce we can charge. Is this the way to check this?
+    * TODO: not sure if wallet comes from props or payment?. wallet comes from props
      */
 
     const { wallet } = props;
     // eslint-disable-next-line no-console
-    console.log(wallet);
+    console.log('wallet', wallet);
     //
-    // if (wallet.card.instruments.length === 0) {
-    //     return false;
-    // }
     //
     // if (!wallet) {
     //     return false;
     // }
+    //
+    // if (wallet.card.instruments.length === 0 || !wallet.card.instruments[0].id) {
+    //     return false;
+    // }
 
-    // eslint-disable-next-line no-warning-comments
-    // TODO: check if this throws error if no fundingSourceNonce is passed and remove after smartwallet SPB updates.
     return true;
 
 
@@ -45,40 +40,52 @@ function isNonceEligible({ props }) : boolean {
 function isNoncePaymentEligible({ props, payment }) : boolean {
     // eslint-disable-next-line no-console
     console.log('payment props', payment, props);
+
+    const { wallet } = props;
+    const { fundingSource } = payment;
+
+    // eslint-disable-next-line no-console
+    console.log('wallet, fundingsource', wallet, fundingSource, FUNDING.CARD);
     //
-    // const { wallet } = props;
-    // const { fundingSource } = payment;
+    // eslint-disable-next-line no-warning-comments
+    // TODO: check if we need to loop between instruments or if we can just pick the first instrument
+    // const { tokenID, branded } = wallet.card.instruments[0];
+    // if (fundingSource !== FUNDING.CARD) {
+    //     return false;
+    // }
+    // if (!branded) {
+    //     return false;
+    // }
     //
-    //
-    // // eslint-disable-next-line no-warning-comments
-    // // TODO: check if we need to loop between instruments or if we can just pick the first instrument
-    // // const { tokenID, branded } = wallet.card.instruments[0];
-    // // if (fundingSource !== FUNDING.CARD) {
-    // //     return false;
-    // // }
-    // // if (!branded) {
-    // //     return false;
-    // // }
-    // //
-    // // if (!tokenID) {
-    // //     return false;
-    // // }
+    // if (!tokenID) {
+    //     return false;
+    // }
 
 
     return true;
 }
 
 function initNonce({ props }) : PaymentFlowInstance {
-    const { createOrder, fundingPaymentNonce, clientID } = props;
+    const { createOrder, clientID, wallet } = props;
+    let { paymentMethodNonce } = props;
+
+    // eslint-disable-next-line no-console
+    console.log({ paymentMethodNonce });
 
     // eslint-disable-next-line no-warning-comments
-    // TODO: uncomment this after smartwallet SPB updates and use optional chaining.
-    // const fundingSourceNonce = wallet.card.instruments[i].tokenID
+    // TODO: remove this after hooking up with honey's nonce
+    if (!paymentMethodNonce)  {
+        paymentMethodNonce = wallet.card.instruments[0].tokenID;
+    }
 
     const start = () => {
+        // eslint-disable-next-line no-console
+        console.log('start payment with nonce');
         return createOrder().then(orderID => {
+            // eslint-disable-next-line no-console
+            console.log('orderID in nonce', orderID);
             // eslint-disable-next-line no-use-before-define
-            return startPaymentWithNonce(orderID, fundingPaymentNonce, clientID);
+            return startPaymentWithNonce(orderID, paymentMethodNonce, clientID);
         });
     };
 
@@ -92,6 +99,8 @@ function initNonce({ props }) : PaymentFlowInstance {
 
 function startPaymentWithNonce(orderID, nonce, clientID) : void {
     try {
+        // eslint-disable-next-line no-console
+        console.log(orderID, nonce, clientID);
         payWithNonce({ orderID, nonce, clientID });
     } catch (error) {
         // eslint-disable-next-line no-warning-comments
