@@ -1,8 +1,6 @@
 /* @flow */
 
-import { ZalgoPromise } from 'zalgo-promise/src';
 import { FUNDING } from '@paypal/sdk-constants/src/funding';
-import { noop } from 'cross-domain-utils/dist/module/util';
 
 import { payWithNonce } from '../api';
 import { promiseNoop } from '../lib';
@@ -46,9 +44,6 @@ function isNoncePaymentEligible({ props, payment }) : boolean {
     const { wallet } = props;
     const { fundingSource } = payment;
 
-    // eslint-disable-next-line no-console
-    console.log('wallet, fundingsource', wallet, fundingSource, FUNDING.CARD);
-    //
     // eslint-disable-next-line no-warning-comments
     // TODO: check if we need to loop between instruments or if we can just pick the first instrument
     const { tokenID, branded } = wallet.card.instruments[0];
@@ -92,7 +87,8 @@ function initNonce({ props }) : PaymentFlowInstance {
     };
 
     return {
-        start
+        start,
+        close: promiseNoop
     };
 
 }
