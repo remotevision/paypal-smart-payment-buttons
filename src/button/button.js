@@ -15,9 +15,9 @@ import { getSelectedFunding, getButtons, getMenuButton } from './dom';
 import { setupButtonLogger } from './logger';
 import { setupRemember } from './remember';
 import { setupPaymentFlows, initiatePaymentFlow, initiateMenuFlow } from './pay';
-import { setupExports } from './exports';
 import { prerenderButtonSmartMenu, clearButtonSmartMenu } from './menu';
 import { validateProps } from './validation';
+import { setupExports } from './exports';
 
 type ButtonOpts = {|
     fundingEligibility : FundingEligibilityType,
@@ -219,18 +219,19 @@ export function setupButton(opts : ButtonOpts) : ZalgoPromise<void> {
         });
     });
 
-    setupExports({ props, isEnabled });
     const setupRememberTask = setupRemember({ rememberFunding, fundingEligibility });
+
     const setupButtonLogsTask = setupButtonLogger({
         style, env, version, sessionID, clientID, partnerAttributionID, commit, sdkCorrelationID,
         buttonCorrelationID, locale, merchantID, buttonSessionID, merchantDomain, fundingSource, getQueriedEligibleFunding });
     const setupPaymentFlowsTask = setupPaymentFlows({ props, config, serviceData, components });
+    const setupExportsTask = setupExports({ props, isEnabled });
 
     const validatePropsTask = setupButtonLogsTask.then(() => validateProps({ env, clientID, intent, createBillingAgreement, createSubscription }));
 
     return ZalgoPromise.hash({
         initPromise, facilitatorAccessToken,
         setupButtonLogsTask, setupPrerenderTask, setupRememberTask,
-        setupPaymentFlowsTask, validatePropsTask
+        setupPaymentFlowsTask, validatePropsTask, setupExportsTask
     }).then(noop);
 }

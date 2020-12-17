@@ -21,11 +21,7 @@ export function setupExports({ props, isEnabled } : ExportsProps)  {
                 getAvailableFundingSources: () => fundingSource,
                 createOrder:                () => {
 
-                    // Check if button disabled (synchronous validation case)
-                    // Invoke onClick and check if click rejected (asynchronous validation case)
                     if (!isEnabled()) {
-                        // eslint-disable-next-line no-warning-comments
-                        // TODO: we need to improve this
                         throw new Error('Error occurred. Button not enabled.');
                     }
 

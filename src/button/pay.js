@@ -99,7 +99,8 @@ export function initiatePaymentFlow({ payment, serviceData, config, components, 
                     updateButtonClientConfig({ orderID, fundingSource, inline }).catch(err => {
                         getLogger().error('update_client_config_error', { err: stringifyError(err) });
                     });
-                }).catch(noop);
+                    // eslint-disable-next-line no-console
+                }).catch(err => console.log('ERR', err));
 
             const { intent, currency } = props;
 
@@ -113,8 +114,13 @@ export function initiatePaymentFlow({ payment, serviceData, config, components, 
                 return validateOrder(orderID, { env, clientID, merchantID, intent, currency, vault });
             });
 
+            // eslint-disable-next-line no-console
+            console.log('smartFields', smartFields);
+
             const confirmOrderPromise = smartFields && smartFields.confirm && createOrder().then(smartFields.confirm);
 
+            // eslint-disable-next-line no-console
+            console.log('confirmOrderPromise', confirmOrderPromise);
             return ZalgoPromise.all([
                 clickPromise,
                 startPromise,

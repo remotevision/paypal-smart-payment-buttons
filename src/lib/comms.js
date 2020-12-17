@@ -7,7 +7,11 @@ import { FRAME_NAME } from '../constants';
 export function getSmartFieldsByFundingSource(fundingSource : string) : ?SmartFields {
 
     try {
-        for (const win of getAllFramesInWindow(window)) {
+        for (const win of getAllFramesInWindow(window)) { // SPB frame -> zoid []
+            // $FlowFixMe
+            // eslint-disable-next-line no-console
+            console.log('win.', win.name);
+            console.log('win.exports', win.exports);
             if (
                 isSameDomain(win) &&
                 // $FlowFixMe
@@ -19,6 +23,7 @@ export function getSmartFieldsByFundingSource(fundingSource : string) : ?SmartFi
             }
         }
     } catch (err) {
-        // pass
+        // eslint-disable-next-line no-console
+        console.log('err', err);
     }
 }

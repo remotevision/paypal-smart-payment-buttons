@@ -9,7 +9,17 @@ export default function configKarma(karma : Object) {
 
     const karmaConfig = getKarmaConfig(karma, {
         basePath: __dirname,
-        webpack:  WEBPACK_CONFIG_TEST
+        webpack:  WEBPACK_CONFIG_TEST,
+        client:   {
+            captureConsole: true,
+            mocha:          {
+                bail:            true,
+                timeout: 10000
+            },
+            jasmine: {
+                timeout:   10000
+            }
+        }
     });
 
     karma.set(karmaConfig);

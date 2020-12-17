@@ -271,19 +271,6 @@ export function getProps({ facilitatorAccessToken } : {| facilitatorAccessToken 
     const onShippingChange = getOnShippingChange({ onShippingChange: xprops.onShippingChange, partnerAttributionID, upgradeLSAT }, { facilitatorAccessToken, createOrder });
     const onAuth = getOnAuth({ facilitatorAccessToken, createOrder, upgradeLSAT });
 
-    // eslint-disable-next-line no-warning-comments
-    // TODO: remove this line after SPB smartwallet updates
-    // const paymentMethodNonce = xprops.paymentMethodNonce;
-
-    // eslint-disable-next-line no-warning-comments
-    // TODO: handle click contingencies here. ensure validation is done before passing back createOrder
-    window.exports = {
-        'name':        'smart-payment-buttons',
-        createOrder,
-        onApprove,
-        onError,
-        onCancel
-    };
 
     return {
         uid,

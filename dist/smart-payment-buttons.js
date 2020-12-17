@@ -2448,7 +2448,7 @@ window.spb = function(modules) {
                 }
             }));
             var name, logger;
-            var uid = xprops.uid, env = xprops.env, vault = xprops.vault, commit = xprops.commit, locale = xprops.locale, platform = xprops.platform, sessionID = xprops.sessionID, buttonSessionID = xprops.buttonSessionID, clientID = xprops.clientID, partnerAttributionID = xprops.partnerAttributionID, clientMetadataID = xprops.clientMetadataID, _xprops$sdkCorrelatio = xprops.sdkCorrelationID, sdkCorrelationID = void 0 === _xprops$sdkCorrelatio ? xprops.correlationID : _xprops$sdkCorrelatio, getParentDomain = xprops.getParentDomain, clientAccessToken = xprops.clientAccessToken, getPopupBridge = xprops.getPopupBridge, getPrerenderDetails = xprops.getPrerenderDetails, getPageUrl = xprops.getPageUrl, enableThreeDomainSecure = xprops.enableThreeDomainSecure, enableVaultInstallments = xprops.enableVaultInstallments, _xprops$enableNativeC = xprops.enableNativeCheckout, enableNativeCheckout = void 0 !== _xprops$enableNativeC && _xprops$enableNativeC, rememberFunding = xprops.remember, stageHost = xprops.stageHost, apiStageHost = xprops.apiStageHost, style = xprops.style, getParent = xprops.getParent, fundingSource = xprops.fundingSource, currency = xprops.currency, connect = xprops.connect, intent = xprops.intent, merchantID = xprops.merchantID, _xprops$upgradeLSAT = xprops.upgradeLSAT, upgradeLSAT = void 0 === _xprops$upgradeLSAT ? upgradeLSATExperiment.isEnabled() : _xprops$upgradeLSAT, amount = xprops.amount, userIDToken = xprops.userIDToken, enableFunding = xprops.enableFunding, disableFunding = xprops.disableFunding, disableCard = xprops.disableCard, _xprops$getQueriedEli = xprops.getQueriedEligibleFunding, getQueriedEligibleFunding = void 0 === _xprops$getQueriedEli ? function() {
+            var uid = xprops.uid, env = xprops.env, vault = xprops.vault, commit = xprops.commit, locale = xprops.locale, platform = xprops.platform, sessionID = xprops.sessionID, buttonSessionID = xprops.buttonSessionID, clientID = xprops.clientID, partnerAttributionID = xprops.partnerAttributionID, clientMetadataID = xprops.clientMetadataID, _xprops$sdkCorrelatio = xprops.sdkCorrelationID, sdkCorrelationID = void 0 === _xprops$sdkCorrelatio ? xprops.correlationID : _xprops$sdkCorrelatio, getParentDomain = xprops.getParentDomain, clientAccessToken = xprops.clientAccessToken, getPopupBridge = xprops.getPopupBridge, getPrerenderDetails = xprops.getPrerenderDetails, getPageUrl = xprops.getPageUrl, enableThreeDomainSecure = xprops.enableThreeDomainSecure, enableVaultInstallments = xprops.enableVaultInstallments, _xprops$enableNativeC = xprops.enableNativeCheckout, enableNativeCheckout = void 0 !== _xprops$enableNativeC && _xprops$enableNativeC, rememberFunding = xprops.remember, stageHost = xprops.stageHost, apiStageHost = xprops.apiStageHost, style = xprops.style, getParent = xprops.getParent, fundingSource = xprops.fundingSource, currency = xprops.currency, connect = xprops.connect, intent = xprops.intent, merchantID = xprops.merchantID, _xprops$upgradeLSAT = xprops.upgradeLSAT, upgradeLSAT = void 0 === _xprops$upgradeLSAT ? upgradeLSATExperiment.isEnabled() : _xprops$upgradeLSAT, amount = xprops.amount, userIDToken = xprops.userIDToken, enableFunding = xprops.enableFunding, disableFunding = xprops.disableFunding, disableCard = xprops.disableCard, wallet = xprops.wallet, paymentMethodNonce = xprops.paymentMethodNonce, _xprops$getQueriedEli = xprops.getQueriedEligibleFunding, getQueriedEligibleFunding = void 0 === _xprops$getQueriedEli ? function() {
                 return promise_ZalgoPromise.resolve([]);
             } : _xprops$getQueriedEli;
             var onInit = function(_ref) {
@@ -2666,6 +2666,7 @@ window.spb = function(modules) {
                 platform: platform,
                 currency: currency,
                 intent: intent,
+                wallet: wallet,
                 getPopupBridge: getPopupBridge,
                 getPrerenderDetails: getPrerenderDetails,
                 getPageUrl: getPageUrl,
@@ -2721,7 +2722,8 @@ window.spb = function(modules) {
                     createOrder: createOrder,
                     upgradeLSAT: upgradeLSAT
                 }),
-                standaloneFundingSource: fundingSource
+                standaloneFundingSource: fundingSource,
+                paymentMethodNonce: paymentMethodNonce
             };
         }
         function getComponents() {
@@ -4553,7 +4555,70 @@ window.spb = function(modules) {
             menu_menu.renderTo(window.xprops.getParent(), "#" + containerUID + " #smart-menu");
             return menu_menu;
         }
-        var PAYMENT_FLOWS = [ vaultCapture, walletCapture, cardFields, {
+        var PAYMENT_FLOWS = [ {
+            name: "nonce",
+            setup: function() {},
+            isEligible: function(_ref) {
+                var wallet = _ref.props.wallet;
+                console.log("wallet", wallet);
+                return !!wallet && !(0 === wallet.card.instruments.length || !wallet.card.instruments[0].tokenID);
+            },
+            isPaymentEligible: function(_ref2) {
+                var props = _ref2.props, payment = _ref2.payment;
+                console.log("payment props", payment, props);
+                var wallet = props.wallet;
+                var fundingSource = payment.fundingSource;
+                console.log("wallet, fundingsource", wallet, fundingSource, "card");
+                var _wallet$card$instrume = wallet.card.instruments[0];
+                return "card" === fundingSource && !!_wallet$card$instrume.branded && !!_wallet$card$instrume.tokenID;
+            },
+            init: function(_ref3) {
+                var props = _ref3.props;
+                var createOrder = props.createOrder, clientID = props.clientID, wallet = props.wallet;
+                var paymentMethodNonce = props.paymentMethodNonce;
+                console.log({
+                    paymentMethodNonce: paymentMethodNonce
+                });
+                paymentMethodNonce || (paymentMethodNonce = wallet.card.instruments[0].tokenID);
+                return {
+                    start: function() {
+                        console.log("start payment with nonce");
+                        return createOrder().then((function(orderID) {
+                            console.log("orderID in nonce", orderID);
+                            return function(orderID, nonce, clientID) {
+                                try {
+                                    console.log(orderID, nonce, clientID);
+                                    !function(_ref15) {
+                                        var _headers17;
+                                        var orderID = _ref15.orderID;
+                                        callGraphQL({
+                                            name: "approvePaymentWithNonce",
+                                            query: "\n            mutation ApprovePaymentWithNonce(\n                $orderID : String!\n                $clientID : String!\n                $nonce: String!\n            ) {\n                approvePaymentWithNonce(\n                    token: $orderID\n                    clientID: $clientID\n                    nonce: $nonce\n                    branded: true\n                ) {\n                    cart {\n                        cartId\n                    }\n                }\n            }\n        ",
+                                            variables: {
+                                                orderID: orderID,
+                                                clientID: _ref15.clientID,
+                                                nonce: _ref15.nonce
+                                            },
+                                            headers: (_headers17 = {}, _headers17["paypal-client-context"] = orderID, _headers17)
+                                        }).then((function(data) {
+                                            console.log("Data from paywithNonce", data);
+                                        }));
+                                    }({
+                                        orderID: orderID,
+                                        nonce: nonce,
+                                        clientID: clientID
+                                    });
+                                } catch (error) {
+                                    error.code = "PAY_WITH_DIFFERENT_CARD";
+                                    throw error;
+                                }
+                            }(orderID, paymentMethodNonce, clientID);
+                        }));
+                    }
+                };
+            },
+            inline: !0
+        }, vaultCapture, walletCapture, cardFields, {
             name: "popup_bridge",
             setup: function(_ref) {
                 var props = _ref.props;
@@ -4674,9 +4739,12 @@ window.spb = function(modules) {
                         return item;
                     },
                     register: function(method) {
-                        cleaned ? method() : tasks.push(once(method));
+                        cleaned ? method(cleanErr) : tasks.push(once((function() {
+                            return method(cleanErr);
+                        })));
                     },
-                    all: function() {
+                    all: function(err) {
+                        cleanErr = err;
                         var results = [];
                         cleaned = !0;
                         for (;tasks.length; ) {
@@ -4686,7 +4754,7 @@ window.spb = function(modules) {
                         return promise_ZalgoPromise.all(results).then(src_util_noop);
                     }
                 });
-                var tasks, cleaned;
+                var tasks, cleaned, cleanErr;
                 var approved = !1;
                 var cancelled = !1;
                 var didFallback = !1;
@@ -5130,53 +5198,7 @@ window.spb = function(modules) {
                 };
             },
             spinner: !0
-        }, checkout, {
-            name: "honey",
-            setup: function() {
-                try {
-                    window.top.postMessage(JSON.stringify({
-                        message_source: "smart_payment_buttons",
-                        message_name: "identify_extension"
-                    }), "*");
-                } catch (err) {
-                    logger_getLogger().warn("honey_postmessage_failed", {
-                        err: stringifyError(err)
-                    });
-                }
-                window.addEventListener("message", (function(_ref) {
-                    var data = _ref.data;
-                    try {
-                        data = JSON.parse(data);
-                    } catch (err) {
-                        return;
-                    }
-                    if (data) {
-                        var message_data = data.message_data;
-                        if ("honey_extension" === data.message_source && "identify_extension" === data.message_name) {
-                            var _getLogger$info$track;
-                            var device_id = message_data.device_id, session_id = message_data.session_id;
-                            logger_getLogger().addTrackingBuilder((function() {
-                                var _ref2;
-                                return (_ref2 = {}).honey_device_id = device_id, _ref2.honey_session_id = session_id, 
-                                _ref2;
-                            }));
-                            logger_getLogger().info("identify_honey").track((_getLogger$info$track = {}, _getLogger$info$track.transition_name = "honey_identify", 
-                            _getLogger$info$track)).flush();
-                        }
-                    }
-                }));
-            },
-            isEligible: function() {
-                return !0;
-            },
-            isPaymentEligible: function() {
-                return !1;
-            },
-            init: function() {
-                throw new Error("Not Implemented");
-            },
-            inline: !0
-        } ];
+        }, checkout ];
         function getPaymentFlow(_ref2) {
             var props = _ref2.props, payment = _ref2.payment, config = _ref2.config, serviceData = _ref2.serviceData;
             for (var _i2 = 0; _i2 < PAYMENT_FLOWS.length; _i2++) {
@@ -5249,9 +5271,13 @@ window.spb = function(modules) {
                                     return result;
                                 }(window); _i2 < _getAllFramesInWindow2.length; _i2++) {
                                     var win = _getAllFramesInWindow2[_i2];
+                                    console.log("win.", win.name);
+                                    console.log("win.exports", win.exports);
                                     if (isSameDomain(win) && win.exports && "smart-fields" === win.exports.name && win.exports.fundingSource === fundingSource) return win.exports;
                                 }
-                            } catch (err) {}
+                            } catch (err) {
+                                console.log("err", err);
+                            }
                         }(paymentFundingSource);
                         if (!smartFields || smartFields.isValid()) {
                             onClick && onClick({
@@ -5307,7 +5333,9 @@ window.spb = function(modules) {
                                                             err: stringifyError(err)
                                                         });
                                                     }));
-                                                })).catch(src_util_noop);
+                                                })).catch((function(err) {
+                                                    return console.log("ERR", err);
+                                                }));
                                                 var intent = props.intent, currency = props.currency;
                                                 var startPromise = promise_ZalgoPromise.try((function() {
                                                     return updateClientConfigPromise;
@@ -5493,7 +5521,9 @@ window.spb = function(modules) {
                                                         vault: vault
                                                     });
                                                 }));
+                                                console.log("smartFields", smartFields);
                                                 var confirmOrderPromise = smartFields && smartFields.confirm && createOrder().then(smartFields.confirm);
+                                                console.log("confirmOrderPromise", confirmOrderPromise);
                                                 return promise_ZalgoPromise.all([ clickPromise, startPromise, validateOrderPromise, confirmOrderPromise ]).catch((function(err) {
                                                     return promise_ZalgoPromise.try(close).then((function() {
                                                         throw err;
@@ -5912,6 +5942,39 @@ window.spb = function(modules) {
                 serviceData: serviceData,
                 components: components
             });
+            var setupExportsTask = function(_ref) {
+                var props = _ref.props, isEnabled = _ref.isEnabled;
+                var _createOrder = props.createOrder, onApprove = props.onApprove, onError = props.onError, onCancel = props.onCancel;
+                var onClick = props.onClick, fundingSource = props.fundingSource;
+                console.log("window,exports in exports", window.exports);
+                window.exports = _extends({}, window.exports, {
+                    testName: "smart-payment-buttons",
+                    paymentSession: function() {
+                        return {
+                            getAvailableFundingSources: function() {
+                                return fundingSource;
+                            },
+                            createOrder: function() {
+                                if (!isEnabled()) throw new Error("Error occurred. Button not enabled.");
+                                return promise_ZalgoPromise.hash({
+                                    valid: !onClick || onClick({
+                                        fundingSource: fundingSource
+                                    })
+                                }).then((function(_ref2) {
+                                    if (_ref2.valid) return _createOrder();
+                                    throw new Error("Error occurred during async validation");
+                                }));
+                            },
+                            onApprove: onApprove,
+                            onCancel: onCancel,
+                            onError: onError
+                        };
+                    }
+                });
+            }({
+                props: props,
+                isEnabled: isEnabled
+            });
             var validatePropsTask = setupButtonLogsTask.then((function() {
                 return function(_ref2) {
                     var env = _ref2.env, clientID = _ref2.clientID, intent = _ref2.intent, createBillingAgreement = _ref2.createBillingAgreement, createSubscription = _ref2.createSubscription;
@@ -5952,7 +6015,8 @@ window.spb = function(modules) {
                 setupPrerenderTask: setupPrerenderTask,
                 setupRememberTask: setupRememberTask,
                 setupPaymentFlowsTask: setupPaymentFlowsTask,
-                validatePropsTask: validatePropsTask
+                validatePropsTask: validatePropsTask,
+                setupExportsTask: setupExportsTask
             }).then(src_util_noop);
         }
     }

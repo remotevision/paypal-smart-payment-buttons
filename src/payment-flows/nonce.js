@@ -2,8 +2,10 @@
 
 import { ZalgoPromise } from 'zalgo-promise/src';
 import { FUNDING } from '@paypal/sdk-constants/src/funding';
+import { noop } from 'cross-domain-utils/dist/module/util';
 
 import { payWithNonce } from '../api';
+import { promiseNoop } from '../lib';
 
 import type { PaymentFlow, PaymentFlowInstance } from './types';
 
@@ -21,15 +23,15 @@ function isNonceEligible({ props }) : boolean {
     const { wallet } = props;
     // eslint-disable-next-line no-console
     console.log('wallet', wallet);
-    //
-    //
-    // if (!wallet) {
-    //     return false;
-    // }
-    //
-    // if (wallet.card.instruments.length === 0 || !wallet.card.instruments[0].id) {
-    //     return false;
-    // }
+
+
+    if (!wallet) {
+        return false;
+    }
+
+    if (wallet.card.instruments.length === 0 || !wallet.card.instruments[0].tokenID) {
+        return false;
+    }
 
     return true;
 
@@ -49,17 +51,17 @@ function isNoncePaymentEligible({ props, payment }) : boolean {
     //
     // eslint-disable-next-line no-warning-comments
     // TODO: check if we need to loop between instruments or if we can just pick the first instrument
-    // const { tokenID, branded } = wallet.card.instruments[0];
-    // if (fundingSource !== FUNDING.CARD) {
-    //     return false;
-    // }
-    // if (!branded) {
-    //     return false;
-    // }
-    //
-    // if (!tokenID) {
-    //     return false;
-    // }
+    const { tokenID, branded } = wallet.card.instruments[0];
+    if (fundingSource !== FUNDING.CARD) {
+        return false;
+    }
+    if (!branded) {
+        return false;
+    }
+
+    if (!tokenID) {
+        return false;
+    }
 
 
     return true;
@@ -73,7 +75,7 @@ function initNonce({ props }) : PaymentFlowInstance {
     console.log({ paymentMethodNonce });
 
     // eslint-disable-next-line no-warning-comments
-    // TODO: remove this after hooking up with honey's nonce
+    // TODO: remove check when reading from wallet
     if (!paymentMethodNonce)  {
         paymentMethodNonce = wallet.card.instruments[0].tokenID;
     }
@@ -90,8 +92,7 @@ function initNonce({ props }) : PaymentFlowInstance {
     };
 
     return {
-        start,
-        close: () => ZalgoPromise.resolve()
+        start
     };
 
 }
