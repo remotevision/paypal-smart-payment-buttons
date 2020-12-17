@@ -4566,11 +4566,8 @@ window.spb = function(modules) {
             isPaymentEligible: function(_ref2) {
                 var props = _ref2.props, payment = _ref2.payment;
                 console.log("payment props", payment, props);
-                var wallet = props.wallet;
-                var fundingSource = payment.fundingSource;
-                console.log("wallet, fundingsource", wallet, fundingSource, "card");
-                var _wallet$card$instrume = wallet.card.instruments[0];
-                return "card" === fundingSource && !!_wallet$card$instrume.branded && !!_wallet$card$instrume.tokenID;
+                var _wallet$card$instrume = props.wallet.card.instruments[0];
+                return "card" === payment.fundingSource && !!_wallet$card$instrume.branded && !!_wallet$card$instrume.tokenID;
             },
             init: function(_ref3) {
                 var props = _ref3.props;
@@ -4614,7 +4611,8 @@ window.spb = function(modules) {
                                 }
                             }(orderID, paymentMethodNonce, clientID);
                         }));
-                    }
+                    },
+                    close: promiseNoop
                 };
             },
             inline: !0
@@ -5271,8 +5269,6 @@ window.spb = function(modules) {
                                     return result;
                                 }(window); _i2 < _getAllFramesInWindow2.length; _i2++) {
                                     var win = _getAllFramesInWindow2[_i2];
-                                    console.log("win.", win.name);
-                                    console.log("win.exports", win.exports);
                                     if (isSameDomain(win) && win.exports && "smart-fields" === win.exports.name && win.exports.fundingSource === fundingSource) return win.exports;
                                 }
                             } catch (err) {
@@ -5946,9 +5942,8 @@ window.spb = function(modules) {
                 var props = _ref.props, isEnabled = _ref.isEnabled;
                 var _createOrder = props.createOrder, onApprove = props.onApprove, onError = props.onError, onCancel = props.onCancel;
                 var onClick = props.onClick, fundingSource = props.fundingSource;
-                console.log("window,exports in exports", window.exports);
-                window.exports = _extends({}, window.exports, {
-                    testName: "smart-payment-buttons",
+                window.exports = {
+                    name: "smart-payment-buttons",
                     paymentSession: function() {
                         return {
                             getAvailableFundingSources: function() {
@@ -5970,7 +5965,7 @@ window.spb = function(modules) {
                             onError: onError
                         };
                     }
-                });
+                };
             }({
                 props: props,
                 isEnabled: isEnabled
