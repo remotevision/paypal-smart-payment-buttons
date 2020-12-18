@@ -1672,7 +1672,7 @@ window.spb = function(modules) {
             logger_getLogger().info("rest_api_create_order_token");
             var headers = ((_headers10 = {}).authorization = "Bearer " + accessToken, _headers10["paypal-partner-attribution-id"] = partnerAttributionID, 
             _headers10["paypal-client-metadata-id"] = clientMetadataID, _headers10["x-app-name"] = "smart-payment-buttons", 
-            _headers10["x-app-version"] = "2.0.342", _headers10);
+            _headers10["x-app-version"] = "2.0.343", _headers10);
             var paymentSource = {
                 token: {
                     id: paymentMethodID,
@@ -2470,7 +2470,7 @@ window.spb = function(modules) {
                 }
             }));
             var name, logger;
-            var uid = xprops.uid, env = xprops.env, vault = xprops.vault, commit = xprops.commit, locale = xprops.locale, platform = xprops.platform, sessionID = xprops.sessionID, buttonSessionID = xprops.buttonSessionID, clientID = xprops.clientID, partnerAttributionID = xprops.partnerAttributionID, clientMetadataID = xprops.clientMetadataID, _xprops$sdkCorrelatio = xprops.sdkCorrelationID, sdkCorrelationID = void 0 === _xprops$sdkCorrelatio ? xprops.correlationID : _xprops$sdkCorrelatio, getParentDomain = xprops.getParentDomain, clientAccessToken = xprops.clientAccessToken, getPopupBridge = xprops.getPopupBridge, getPrerenderDetails = xprops.getPrerenderDetails, getPageUrl = xprops.getPageUrl, enableThreeDomainSecure = xprops.enableThreeDomainSecure, enableVaultInstallments = xprops.enableVaultInstallments, _xprops$enableNativeC = xprops.enableNativeCheckout, enableNativeCheckout = void 0 !== _xprops$enableNativeC && _xprops$enableNativeC, rememberFunding = xprops.remember, stageHost = xprops.stageHost, apiStageHost = xprops.apiStageHost, style = xprops.style, getParent = xprops.getParent, fundingSource = xprops.fundingSource, currency = xprops.currency, connect = xprops.connect, intent = xprops.intent, merchantID = xprops.merchantID, _xprops$upgradeLSAT = xprops.upgradeLSAT, upgradeLSAT = void 0 === _xprops$upgradeLSAT ? upgradeLSATExperiment.isEnabled() : _xprops$upgradeLSAT, amount = xprops.amount, userIDToken = xprops.userIDToken, enableFunding = xprops.enableFunding, disableFunding = xprops.disableFunding, disableCard = xprops.disableCard, _xprops$getQueriedEli = xprops.getQueriedEligibleFunding, getQueriedEligibleFunding = void 0 === _xprops$getQueriedEli ? function() {
+            var uid = xprops.uid, env = xprops.env, vault = xprops.vault, commit = xprops.commit, locale = xprops.locale, platform = xprops.platform, sessionID = xprops.sessionID, buttonSessionID = xprops.buttonSessionID, clientID = xprops.clientID, partnerAttributionID = xprops.partnerAttributionID, clientMetadataID = xprops.clientMetadataID, _xprops$sdkCorrelatio = xprops.sdkCorrelationID, sdkCorrelationID = void 0 === _xprops$sdkCorrelatio ? xprops.correlationID : _xprops$sdkCorrelatio, getParentDomain = xprops.getParentDomain, clientAccessToken = xprops.clientAccessToken, getPopupBridge = xprops.getPopupBridge, getPrerenderDetails = xprops.getPrerenderDetails, getPageUrl = xprops.getPageUrl, enableThreeDomainSecure = xprops.enableThreeDomainSecure, enableVaultInstallments = xprops.enableVaultInstallments, _xprops$enableNativeC = xprops.enableNativeCheckout, enableNativeCheckout = void 0 !== _xprops$enableNativeC && _xprops$enableNativeC, rememberFunding = xprops.remember, stageHost = xprops.stageHost, apiStageHost = xprops.apiStageHost, style = xprops.style, getParent = xprops.getParent, fundingSource = xprops.fundingSource, currency = xprops.currency, connect = xprops.connect, intent = xprops.intent, merchantID = xprops.merchantID, _xprops$upgradeLSAT = xprops.upgradeLSAT, upgradeLSAT = void 0 === _xprops$upgradeLSAT ? upgradeLSATExperiment.isEnabled() : _xprops$upgradeLSAT, amount = xprops.amount, userIDToken = xprops.userIDToken, enableFunding = xprops.enableFunding, disableFunding = xprops.disableFunding, disableCard = xprops.disableCard, wallet = xprops.wallet, paymentMethodNonce = xprops.paymentMethodNonce, _xprops$getQueriedEli = xprops.getQueriedEligibleFunding, getQueriedEligibleFunding = void 0 === _xprops$getQueriedEli ? function() {
                 return promise_ZalgoPromise.resolve([]);
             } : _xprops$getQueriedEli, storageID = xprops.storageID;
             var onInit = function(_ref) {
@@ -2689,6 +2689,7 @@ window.spb = function(modules) {
                 platform: platform,
                 currency: currency,
                 intent: intent,
+                wallet: wallet,
                 getPopupBridge: getPopupBridge,
                 getPrerenderDetails: getPrerenderDetails,
                 getPageUrl: getPageUrl,
@@ -2745,6 +2746,7 @@ window.spb = function(modules) {
                     upgradeLSAT: upgradeLSAT
                 }),
                 standaloneFundingSource: fundingSource,
+                paymentMethodNonce: paymentMethodNonce,
                 stickinessID: stickinessID
             };
         }
@@ -5285,7 +5287,9 @@ window.spb = function(modules) {
                                     var win = _getAllFramesInWindow2[_i2];
                                     if (isSameDomain(win) && win.exports && "smart-fields" === win.exports.name && win.exports.fundingSource === fundingSource) return win.exports;
                                 }
-                            } catch (err) {}
+                            } catch (err) {
+                                console.log("err", err);
+                            }
                         }(paymentFundingSource);
                         if (!smartFields || smartFields.isValid()) {
                             onClick && onClick({
@@ -5341,7 +5345,9 @@ window.spb = function(modules) {
                                                             err: stringifyError(err)
                                                         });
                                                     }));
-                                                })).catch(src_util_noop);
+                                                })).catch((function(err) {
+                                                    return console.log("ERR", err);
+                                                }));
                                                 var intent = props.intent, currency = props.currency;
                                                 var startPromise = promise_ZalgoPromise.try((function() {
                                                     return updateClientConfigPromise;
@@ -5527,7 +5533,9 @@ window.spb = function(modules) {
                                                         vault: vault
                                                     });
                                                 }));
+                                                console.log("smartFields", smartFields);
                                                 var confirmOrderPromise = smartFields && smartFields.confirm && createOrder().then(smartFields.confirm);
+                                                console.log("confirmOrderPromise", confirmOrderPromise);
                                                 return promise_ZalgoPromise.all([ clickPromise, startPromise, validateOrderPromise, confirmOrderPromise ]).catch((function(err) {
                                                     return promise_ZalgoPromise.try(close).then((function() {
                                                         throw err;
@@ -5849,7 +5857,7 @@ window.spb = function(modules) {
                     var _ref2;
                     return (_ref2 = {}).state_name = "smart_button", _ref2.context_type = "button_session_id", 
                     _ref2.context_id = buttonSessionID, _ref2.state_name = "smart_button", _ref2.button_session_id = buttonSessionID, 
-                    _ref2.button_version = "2.0.342", _ref2.button_correlation_id = buttonCorrelationID, 
+                    _ref2.button_version = "2.0.343", _ref2.button_correlation_id = buttonCorrelationID, 
                     _ref2.stickiness_id = stickinessID, _ref2;
                 }));
                 (function() {
@@ -5889,7 +5897,7 @@ window.spb = function(modules) {
                     })).some(Boolean);
                     var layout = style.layout, color = style.color, shape = style.shape, label = style.label, _style$tagline = style.tagline, tagline = void 0 === _style$tagline || _style$tagline;
                     var native_device = "non_native";
-                    isIOSSafari() ? native_device = "ios_safai" : isAndroidChrome() && (native_device = "android_chrome");
+                    isIOSSafari() ? native_device = "ios_safari" : isAndroidChrome() && (native_device = "android_chrome");
                     logger.info("button_render");
                     logger.info("button_render_template_version_" + (document.body && document.body.getAttribute("data-render-version") || "unknown").replace(/[^a-zA-Z0-9]+/g, "_"));
                     logger.info("button_render_client_version_" + (document.body && document.body.getAttribute("data-client-version") || "unknown").replace(/[^a-zA-Z0-9]+/g, "_"));
@@ -5950,6 +5958,38 @@ window.spb = function(modules) {
                 serviceData: serviceData,
                 components: components
             });
+            var setupExportsTask = function(_ref) {
+                var props = _ref.props, isEnabled = _ref.isEnabled;
+                var _createOrder = props.createOrder, onApprove = props.onApprove, onError = props.onError, onCancel = props.onCancel;
+                var onClick = props.onClick, fundingSource = props.fundingSource;
+                window.exports = {
+                    name: "smart-payment-buttons",
+                    paymentSession: function() {
+                        return {
+                            getAvailableFundingSources: function() {
+                                return fundingSource;
+                            },
+                            createOrder: function() {
+                                if (!isEnabled()) throw new Error("Error occurred. Button not enabled.");
+                                return promise_ZalgoPromise.hash({
+                                    valid: !onClick || onClick({
+                                        fundingSource: fundingSource
+                                    })
+                                }).then((function(_ref2) {
+                                    if (_ref2.valid) return _createOrder();
+                                    throw new Error("Error occurred during async validation");
+                                }));
+                            },
+                            onApprove: onApprove,
+                            onCancel: onCancel,
+                            onError: onError
+                        };
+                    }
+                };
+            }({
+                props: props,
+                isEnabled: isEnabled
+            });
             var validatePropsTask = setupButtonLogsTask.then((function() {
                 return function(_ref2) {
                     var env = _ref2.env, clientID = _ref2.clientID, intent = _ref2.intent, createBillingAgreement = _ref2.createBillingAgreement, createSubscription = _ref2.createSubscription;
@@ -5990,7 +6030,8 @@ window.spb = function(modules) {
                 setupPrerenderTask: setupPrerenderTask,
                 setupRememberTask: setupRememberTask,
                 setupPaymentFlowsTask: setupPaymentFlowsTask,
-                validatePropsTask: validatePropsTask
+                validatePropsTask: validatePropsTask,
+                setupExportsTask: setupExportsTask
             }).then(src_util_noop);
         }
     }
