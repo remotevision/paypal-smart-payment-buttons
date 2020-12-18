@@ -12,7 +12,7 @@ import type { CreateOrder, XCreateOrder, CreateBillingAgreement, XCreateBillingA
     OnApprove, XOnApprove, OnCancel, XOnCancel, OnClick, XOnClick, OnShippingChange, XOnShippingChange, XOnError, OnError,
     XGetPopupBridge, GetPopupBridge, XCreateSubscription, RememberFunding, GetPageURL, OnAuth, GetQueriedEligibleFunding } from '../props';
 import { type FirebaseConfig } from '../api';
-import { getNonce, createExperiment } from '../lib';
+import { getNonce, createExperiment, getStorageID, isStorageStateFresh } from '../lib';
 import { getOnInit } from '../props/onInit';
 import { getCreateOrder } from '../props/createOrder';
 import { getOnApprove } from '../props/onApprove';
@@ -84,6 +84,7 @@ export type ButtonXProps = {|
     enableFunding : ?$ReadOnlyArray<$Values<typeof FUNDING>>,
     disableCard : ?$ReadOnlyArray<$Values<typeof CARD>>,
     getQueriedEligibleFunding? : GetQueriedEligibleFunding,
+    storageID? : string,
 
     stageHost : ?string,
     apiStageHost : ?string,
@@ -145,6 +146,7 @@ export type ButtonProps = {|
 
     amount : ?string,
     userIDToken : ?string,
+    stickinessID : string,
 
     onInit : OnInit,
     onError : OnError,
@@ -208,7 +210,8 @@ export function getProps({ facilitatorAccessToken } : {| facilitatorAccessToken 
         disableCard,
         wallet,
         paymentMethodNonce,
-        getQueriedEligibleFunding = () => ZalgoPromise.resolve([])
+        getQueriedEligibleFunding = () => ZalgoPromise.resolve([]),
+        storageID
     } = xprops;
 
     const onInit = getOnInit({ onInit: xprops.onInit });
@@ -260,6 +263,10 @@ export function getProps({ facilitatorAccessToken } : {| facilitatorAccessToken 
         }
     }
 
+    const stickinessID = (storageID && isStorageStateFresh())
+        ? storageID
+        : getStorageID();
+
     const createBillingAgreement = getCreateBillingAgreement({ createBillingAgreement: xprops.createBillingAgreement });
     const createSubscription = getCreateSubscription({ createSubscription: xprops.createSubscription, partnerAttributionID, merchantID, clientID }, { facilitatorAccessToken });
 
@@ -270,7 +277,6 @@ export function getProps({ facilitatorAccessToken } : {| facilitatorAccessToken 
     const onCancel = getOnCancel({ onCancel: xprops.onCancel, onError }, { createOrder });
     const onShippingChange = getOnShippingChange({ onShippingChange: xprops.onShippingChange, partnerAttributionID, upgradeLSAT }, { facilitatorAccessToken, createOrder });
     const onAuth = getOnAuth({ facilitatorAccessToken, createOrder, upgradeLSAT });
-
 
     return {
         uid,
@@ -329,7 +335,8 @@ export function getProps({ facilitatorAccessToken } : {| facilitatorAccessToken 
 
         onAuth,
         standaloneFundingSource: fundingSource,
-        paymentMethodNonce
+        paymentMethodNonce,
+        stickinessID
     };
 }
 

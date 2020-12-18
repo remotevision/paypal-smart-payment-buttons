@@ -24,6 +24,7 @@ function isNonceEligible({ props }) : boolean {
 
 
     if (!wallet) {
+
         return false;
     }
 
