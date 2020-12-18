@@ -1,8 +1,8 @@
 /* @flow */
 /* eslint max-lines: off */
 
-import { extendUrl, uniqueID, getUserAgent, supportsPopups, memoize, stringifyError, isIos, isAndroid,
-    isSafari, isChrome, stringifyErrorMessage, cleanup, once, noop } from 'belter/src';
+import { extendUrl, uniqueID, getUserAgent, supportsPopups, memoize, stringifyError,
+    stringifyErrorMessage, cleanup, once, noop } from 'belter/src';
 import { ZalgoPromise } from 'zalgo-promise/src';
 import { PLATFORM, ENV, FPTI_KEY } from '@paypal/sdk-constants/src';
 import { type CrossDomainWindowType, isWindowClosed, onCloseWindow, getDomain } from 'cross-domain-utils/src';
@@ -10,7 +10,7 @@ import { type CrossDomainWindowType, isWindowClosed, onCloseWindow, getDomain } 
 import type { ButtonProps } from '../button/props';
 import { NATIVE_CHECKOUT_URI, WEB_CHECKOUT_URI, NATIVE_CHECKOUT_POPUP_URI } from '../config';
 import { getNativeEligibility, firebaseSocket, type MessageSocket, type FirebaseConfig } from '../api';
-import { getLogger, promiseOne, promiseNoop } from '../lib';
+import { getLogger, promiseOne, promiseNoop, isIOSSafari, isAndroidChrome } from '../lib';
 import { USER_ACTION, FPTI_STATE, FPTI_TRANSITION, FTPI_CUSTOM_KEY } from '../constants';
 import { type OnShippingChangeData } from '../props/onShippingChange';
 
@@ -40,12 +40,22 @@ const SOCKET_MESSAGE = {
     ON_ERROR:           'onError'
 };
 
-const NATIVE_DOMAIN = 'https://www.paypal.com';
-const NATIVE_DOMAIN_SANDBOX = 'https://www.paypal.com';
+const NATIVE_DOMAIN = {
+    [ ENV.TEST ]:       'https://www.paypal.com',
+    [ ENV.LOCAL ]:      getDomain(),
+    [ ENV.STAGE ]:      getDomain(),
+    [ ENV.SANDBOX ]:    'https://www.paypal.com',
+    [ ENV.PRODUCTION ]: 'https://www.paypal.com'
+};
 
 // Popup domain needs to be different than native domain for app switch to work on iOS
-const NATIVE_POPUP_DOMAIN = 'https://history.paypal.com';
-const NATIVE_POPUP_DOMAIN_SANDBOX = 'https://www.sandbox.paypal.com';
+const NATIVE_POPUP_DOMAIN = {
+    [ ENV.TEST ]:       'https://history.paypal.com',
+    [ ENV.LOCAL ]:      getDomain(),
+    [ ENV.STAGE ]:      getDomain(),
+    [ ENV.SANDBOX ]:    'https://www.sandbox.paypal.com',
+    [ ENV.PRODUCTION ]: 'https://history.paypal.com'
+};
 
 let clean;
 
@@ -79,14 +89,6 @@ const getNativeSocket = memoize(({ sessionUID, firebaseConfig, version } : Nativ
 
     return nativeSocket;
 });
-
-function isIOSSafari() : boolean {
-    return isIos() && isSafari();
-}
-
-function isAndroidChrome() : boolean {
-    return isAndroid() && isChrome();
-}
 
 function useDirectAppSwitch() : boolean {
     return isAndroidChrome();
@@ -280,9 +282,7 @@ function initNative({ props, components, config, payment, serviceData } : InitOp
             return 'https://www.sandbox.paypal.com';
         }
 
-        return (env === ENV.SANDBOX)
-            ? NATIVE_DOMAIN_SANDBOX
-            : NATIVE_DOMAIN;
+        return NATIVE_DOMAIN[env];
     });
 
     const getNativePopupDomain = memoize(() : string => {
@@ -290,9 +290,7 @@ function initNative({ props, components, config, payment, serviceData } : InitOp
             return 'https://history.paypal.com';
         }
 
-        return (env === ENV.SANDBOX)
-            ? NATIVE_POPUP_DOMAIN_SANDBOX
-            : NATIVE_POPUP_DOMAIN;
+        return NATIVE_POPUP_DOMAIN[env];
     });
 
     const getNativeUrlForAndroid = memoize(({ pageUrl = initialPageUrl, sessionUID } = {}) : string => {
