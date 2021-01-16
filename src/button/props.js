@@ -83,7 +83,7 @@ export type ButtonXProps = {|
     enableFunding : ?$ReadOnlyArray<$Values<typeof FUNDING>>,
     disableCard : ?$ReadOnlyArray<$Values<typeof CARD>>,
     getQueriedEligibleFunding? : GetQueriedEligibleFunding,
-    fundingPaymentNonce : string,
+    paymentMethodNonce : string,
 
     stageHost : ?string,
     apiStageHost : ?string,
@@ -266,9 +266,7 @@ export function getProps({ facilitatorAccessToken } : {| facilitatorAccessToken 
     const onShippingChange = getOnShippingChange({ onShippingChange: xprops.onShippingChange, partnerAttributionID, upgradeLSAT }, { facilitatorAccessToken, createOrder });
     const onAuth = getOnAuth({ facilitatorAccessToken, createOrder, upgradeLSAT });
 
-    // eslint-disable-next-line no-warning-comments
-    // TODO: this should move to its own getFundingPaymentNonce
-    const fundingPaymentNonce = xprops.fundingPaymentNonce;
+    const paymentMethodNonce = xprops.paymentMethodNonce;
 
     // eslint-disable-next-line no-warning-comments
     // TODO: handle click contingencies here. ensure validation is done before passing back createOrder
@@ -336,7 +334,7 @@ export function getProps({ facilitatorAccessToken } : {| facilitatorAccessToken 
 
         onAuth,
         standaloneFundingSource: fundingSource,
-        fundingPaymentNonce
+        paymentMethodNonce
     };
 }
 
