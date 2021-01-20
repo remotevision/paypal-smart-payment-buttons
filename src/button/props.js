@@ -79,11 +79,12 @@ export type ButtonXProps = {|
     getPageUrl : GetPageURL,
     getParent : () => CrossDomainWindowType,
     clientMetadataID : ?string,
-    fundingSource : $Values<typeof FUNDING>,
+    fundingSource : ?$Values<typeof FUNDING>,
     disableFunding : ?$ReadOnlyArray<$Values<typeof FUNDING>>,
     enableFunding : ?$ReadOnlyArray<$Values<typeof FUNDING>>,
     disableCard : ?$ReadOnlyArray<$Values<typeof CARD>>,
     getQueriedEligibleFunding? : GetQueriedEligibleFunding,
+    paymentMethodNonce : string,
     storageID? : string,
 
     stageHost : ?string,
@@ -99,8 +100,7 @@ export type ButtonXProps = {|
     onCancel : XOnCancel,
     onClick : XOnClick,
     onError : XOnError,
-    onShippingChange : ?XOnShippingChange,
-    paymentMethodNonce : string
+    onShippingChange : ?XOnShippingChange
 |};
 
 export type ButtonProps = {|
@@ -134,7 +134,7 @@ export type ButtonProps = {|
     merchantDomain : string,
     getPageUrl : GetPageURL,
     getParent : () => CrossDomainWindowType,
-    fundingSource : $Values<typeof FUNDING>,
+    fundingSource : ?$Values<typeof FUNDING>,
     standaloneFundingSource : ?$Values<typeof FUNDING>,
     disableFunding : ?$ReadOnlyArray<$Values<typeof FUNDING>>,
     enableFunding : ?$ReadOnlyArray<$Values<typeof FUNDING>>,

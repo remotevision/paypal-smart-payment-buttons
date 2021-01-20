@@ -95,11 +95,11 @@ function initNonce({ props }) : PaymentFlowInstance {
 }
 
 
-function startPaymentWithNonce(orderID, nonce, clientID) : void {
+function startPaymentWithNonce(orderID, paymentMethodNonce, clientID) : void {
     try {
         // eslint-disable-next-line no-console
-        console.log(orderID, nonce, clientID);
-        payWithNonce({ orderID, nonce, clientID });
+        console.log(orderID, paymentMethodNonce, clientID);
+        payWithNonce({ orderID, paymentMethodNonce, clientID });
     } catch (error) {
         // eslint-disable-next-line no-warning-comments
         // TODO: test this. SPB should call merchant's onError. move to constant
