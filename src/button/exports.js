@@ -10,7 +10,6 @@ props : ButtonProps,
     isEnabled : () => boolean
 |};
 
-
 export function setupExports({ props, isEnabled } : ExportsProps)  {
     const { createOrder, onApprove, onError, onCancel } = props;
     const { onClick, fundingSource } = props;
@@ -26,6 +25,7 @@ export function setupExports({ props, isEnabled } : ExportsProps)  {
                     }
 
                     return ZalgoPromise.hash({
+                        // $FlowFixMe
                         valid: onClick ? onClick({ fundingSource }) : true
                     }).then(({ valid }) => {
                         if (!valid) {
