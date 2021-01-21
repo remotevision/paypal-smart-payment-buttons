@@ -3,7 +3,7 @@
 import { FUNDING } from '@paypal/sdk-constants/src/funding';
 
 import { payWithNonce } from '../api';
-import { promiseNoop } from '../lib';
+import { getLogger, promiseNoop } from '../lib';
 
 import type { PaymentFlow, PaymentFlowInstance } from './types';
 
@@ -19,8 +19,7 @@ function isNonceEligible({ props }) : boolean {
      */
 
     const { wallet } = props;
-    // eslint-disable-next-line no-console
-    console.log('wallet', wallet);
+    getLogger.info('wallet', wallet);
 
 
     if (!wallet) {
@@ -39,8 +38,7 @@ function isNonceEligible({ props }) : boolean {
 
 
 function isNoncePaymentEligible({ props, payment }) : boolean {
-    // eslint-disable-next-line no-console
-    console.log('payment props', payment, props);
+    getLogger.info('payment props', payment, props);
 
     const { wallet } = props;
     const { fundingSource } = payment;
@@ -67,8 +65,7 @@ function initNonce({ props }) : PaymentFlowInstance {
     const { createOrder, clientID, wallet } = props;
     let { paymentMethodNonce } = props;
 
-    // eslint-disable-next-line no-console
-    console.log({ paymentMethodNonce });
+    getLogger.info({ paymentMethodNonce });
 
     // eslint-disable-next-line no-warning-comments
     // TODO: remove check when reading from wallet
@@ -77,11 +74,9 @@ function initNonce({ props }) : PaymentFlowInstance {
     }
 
     const start = () => {
-        // eslint-disable-next-line no-console
-        console.log('start payment with nonce');
+        getLogger.info('start payment with nonce');
         return createOrder().then(orderID => {
-            // eslint-disable-next-line no-console
-            console.log('orderID in nonce', orderID);
+            getLogger.info('orderID in nonce', orderID);
             // eslint-disable-next-line no-use-before-define
             return startPaymentWithNonce(orderID, paymentMethodNonce, clientID);
         });
@@ -97,8 +92,7 @@ function initNonce({ props }) : PaymentFlowInstance {
 
 function startPaymentWithNonce(orderID, paymentMethodNonce, clientID) : void {
     try {
-        // eslint-disable-next-line no-console
-        console.log(orderID, paymentMethodNonce, clientID);
+        getLogger.info(orderID, paymentMethodNonce, clientID);
         payWithNonce({ orderID, paymentMethodNonce, clientID });
     } catch (error) {
         // eslint-disable-next-line no-warning-comments
