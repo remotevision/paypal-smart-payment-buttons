@@ -494,7 +494,8 @@ type PayWithNonceOptions = {|
 |};
 
 export function payWithNonce({ orderID, nonce, clientID, branded = true } : PayWithNonceOptions) : ZalgoPromise<mixed> {
-    getLogger.info('nonce input params',  orderID, nonce, clientID, branded);
+    // $FlowFixMe
+    getLogger().info('nonce input params',  orderID, nonce, clientID, branded);
     return callGraphQL({
         name:  'approvePaymentWithNonce',
         query: `
@@ -526,6 +527,6 @@ export function payWithNonce({ orderID, nonce, clientID, branded = true } : PayW
             [ HEADERS.CLIENT_CONTEXT ]: orderID
         }
     }).then(data => {
-        getLogger.info('Data from paywithNonce', data);
+        getLogger().info('Data from paywithNonce', data);
     });
 }

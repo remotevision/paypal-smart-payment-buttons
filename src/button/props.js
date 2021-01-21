@@ -136,7 +136,7 @@ export type ButtonProps = {|
     merchantDomain : string,
     getPageUrl : GetPageURL,
     getParent : () => CrossDomainWindowType,
-    fundingSource : ?$Values<typeof FUNDING>,
+    fundingSource : $Values<typeof FUNDING>,
     standaloneFundingSource : ?$Values<typeof FUNDING>,
     disableFunding : ?$ReadOnlyArray<$Values<typeof FUNDING>>,
     enableFunding : ?$ReadOnlyArray<$Values<typeof FUNDING>>,

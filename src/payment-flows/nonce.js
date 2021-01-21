@@ -30,9 +30,6 @@ function isNonceEligible({ props }) : boolean {
 
 
 function isNoncePaymentEligible({ props, payment }) : boolean {
-    // $FlowFixMe
-    getLogger.info('payment props', payment, props);
-
     const { wallet, branded } = props;
     const { fundingSource } = payment;
 
@@ -59,7 +56,7 @@ function initNonce({ props }) : PaymentFlowInstance {
     let { paymentMethodNonce } = props;
 
     // $FlowFixMe
-    getLogger.info({ paymentMethodNonce });
+    getLogger().info(paymentMethodNonce);
 
     // eslint-disable-next-line no-warning-comments
     // TODO: remove check when reading from wallet
@@ -68,9 +65,10 @@ function initNonce({ props }) : PaymentFlowInstance {
     }
 
     const start = () => {
-        getLogger.info('start payment with nonce');
+        getLogger().info('start payment with nonce');
         return createOrder().then(orderID => {
-            getLogger.info('orderID in nonce', orderID);
+            // $FlowFixMe
+            getLogger().info('orderID in nonce', orderID);
             // eslint-disable-next-line no-use-before-define
             return startPaymentWithNonce(orderID, paymentMethodNonce, clientID, branded);
         });
@@ -87,7 +85,8 @@ function initNonce({ props }) : PaymentFlowInstance {
 function startPaymentWithNonce(orderID, paymentMethodNonce, clientID, branded) : void {
     try {
         // $FlowFixMe
-        getLogger.info(orderID, paymentMethodNonce, clientID, branded);
+        getLogger().info(orderID, paymentMethodNonce, clientID, branded);
+        // $FlowFixMe
         payWithNonce({ orderID, paymentMethodNonce, clientID, branded });
     } catch (error) {
         // eslint-disable-next-line no-warning-comments
