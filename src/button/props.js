@@ -84,7 +84,6 @@ export type ButtonXProps = {|
     enableFunding : ?$ReadOnlyArray<$Values<typeof FUNDING>>,
     disableCard : ?$ReadOnlyArray<$Values<typeof CARD>>,
     getQueriedEligibleFunding? : GetQueriedEligibleFunding,
-    paymentMethodNonce : string,
     storageID? : string,
 
     stageHost : ?string,
@@ -100,7 +99,10 @@ export type ButtonXProps = {|
     onCancel : XOnCancel,
     onClick : XOnClick,
     onError : XOnError,
-    onShippingChange : ?XOnShippingChange
+    onShippingChange : ?XOnShippingChange,
+
+    paymentMethodNonce : string,
+    branded : boolean
 |};
 
 export type ButtonProps = {|
@@ -162,7 +164,9 @@ export type ButtonProps = {|
     onCancel : OnCancel,
     onShippingChange : ?OnShippingChange,
     onAuth : OnAuth,
-    paymentMethodNonce : string
+
+    paymentMethodNonce : string,
+    branded : boolean
 |};
 
 export function getProps({ facilitatorAccessToken } : {| facilitatorAccessToken : string |}) : ButtonProps {
@@ -210,6 +214,7 @@ export function getProps({ facilitatorAccessToken } : {| facilitatorAccessToken 
         disableCard,
         wallet,
         paymentMethodNonce,
+        branded,
         getQueriedEligibleFunding = () => ZalgoPromise.resolve([]),
         storageID
     } = xprops;
@@ -336,6 +341,7 @@ export function getProps({ facilitatorAccessToken } : {| facilitatorAccessToken 
         onAuth,
         standaloneFundingSource: fundingSource,
         paymentMethodNonce,
+        branded,
         stickinessID
     };
 }

@@ -13,17 +13,9 @@ function setupNonce() {
 
 function isNonceEligible({ props }) : boolean {
 
-    /*
-    * TODO: this can use optional chaining
-    * TODO: not sure if wallet comes from props or payment?. wallet comes from props
-     */
-
     const { wallet } = props;
-    getLogger.info('wallet', wallet);
-
 
     if (!wallet) {
-
         return false;
     }
 
@@ -38,14 +30,15 @@ function isNonceEligible({ props }) : boolean {
 
 
 function isNoncePaymentEligible({ props, payment }) : boolean {
+    // $FlowFixMe
     getLogger.info('payment props', payment, props);
 
-    const { wallet } = props;
+    const { wallet, branded } = props;
     const { fundingSource } = payment;
 
     // eslint-disable-next-line no-warning-comments
     // TODO: check if we need to loop between instruments or if we can just pick the first instrument
-    const { tokenID, branded } = wallet.card.instruments[0];
+    const { tokenID } = wallet.card.instruments[0];
     if (fundingSource !== FUNDING.CARD) {
         return false;
     }
@@ -62,9 +55,10 @@ function isNoncePaymentEligible({ props, payment }) : boolean {
 }
 
 function initNonce({ props }) : PaymentFlowInstance {
-    const { createOrder, clientID, wallet } = props;
+    const { createOrder, clientID, wallet, branded } = props;
     let { paymentMethodNonce } = props;
 
+    // $FlowFixMe
     getLogger.info({ paymentMethodNonce });
 
     // eslint-disable-next-line no-warning-comments
@@ -78,7 +72,7 @@ function initNonce({ props }) : PaymentFlowInstance {
         return createOrder().then(orderID => {
             getLogger.info('orderID in nonce', orderID);
             // eslint-disable-next-line no-use-before-define
-            return startPaymentWithNonce(orderID, paymentMethodNonce, clientID);
+            return startPaymentWithNonce(orderID, paymentMethodNonce, clientID, branded);
         });
     };
 
@@ -90,10 +84,11 @@ function initNonce({ props }) : PaymentFlowInstance {
 }
 
 
-function startPaymentWithNonce(orderID, paymentMethodNonce, clientID) : void {
+function startPaymentWithNonce(orderID, paymentMethodNonce, clientID, branded) : void {
     try {
-        getLogger.info(orderID, paymentMethodNonce, clientID);
-        payWithNonce({ orderID, paymentMethodNonce, clientID });
+        // $FlowFixMe
+        getLogger.info(orderID, paymentMethodNonce, clientID, branded);
+        payWithNonce({ orderID, paymentMethodNonce, clientID, branded });
     } catch (error) {
         // eslint-disable-next-line no-warning-comments
         // TODO: test this. SPB should call merchant's onError. move to constant
