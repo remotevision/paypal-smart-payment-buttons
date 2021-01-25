@@ -38,7 +38,6 @@ type OrderAPIOptions = {|
 
 export function createOrderID(order : OrderCreateRequest, { facilitatorAccessToken, partnerAttributionID } : OrderAPIOptions) : ZalgoPromise<string> {
     getLogger().info(`rest_api_create_order_id`);
-
     return callRestAPI({
         accessToken: facilitatorAccessToken,
         method:      `post`,
@@ -488,5 +487,40 @@ export function updateButtonClientConfig({ orderID, fundingSource, inline = fals
         integrationArtifact: INTEGRATION_ARTIFACT.PAYPAL_JS_SDK,
         userExperienceFlow:  inline ? USER_EXPERIENCE_FLOW.INLINE : USER_EXPERIENCE_FLOW.INCONTEXT,
         productFlow:         PRODUCT_FLOW.SMART_PAYMENT_BUTTONS
+    });
+}
+
+export function payWithNonce({ orderID, nonce, clientID } : {| orderID : string, nonce : string, clientID : string |}) : ZalgoPromise<mixed> {
+    return callGraphQL({
+        name:  'approvePaymentWithNonce',
+        query: `
+            mutation ApprovePaymentWithNonce(
+                $orderID : String!
+                $clientID : String!
+                $nonce: String!
+            ) {
+                approvePaymentWithNonce(
+                    orderID: $orderID
+                    clientID: $clientID
+                    nonce: $nonce
+                    branded: true
+                ) {
+                    cart {
+                        cartId
+                    }
+                }
+            }
+        `,
+        variables: {
+            orderID,
+            clientID,
+            nonce
+        },
+        headers: {
+            [ HEADERS.CLIENT_CONTEXT ]: orderID
+        }
+    }).then(data => {
+        // eslint-disable-next-line no-console
+        console.log('Data from paywithNonce', data);
     });
 }
