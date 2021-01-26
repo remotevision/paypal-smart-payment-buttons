@@ -143,7 +143,10 @@ function buildSmartWalletQuery() : string {
         $userRefreshToken: 'String',
         $userAccessToken:  'String',
 
-        $vetted:           'Boolean'
+        $vetted:           'Boolean',
+
+        $fundingPaymentNonce: 'String',
+        $branded:             'Boolean'
     };
 
     const Inputs = {
@@ -156,7 +159,10 @@ function buildSmartWalletQuery() : string {
         userRefreshToken: '$userRefreshToken',
         userAccessToken:  '$userAccessToken',
 
-        vetted:           '$vetted'
+        vetted:           '$vetted',
+
+        fundingPaymentNonce: '$fundingPaymentNonce',
+        branded:             '$branded'
     };
 
     const getSmartWalletInstrumentQuery = () => {
@@ -204,14 +210,17 @@ export type WalletOptions = {|
     buyerAccessToken? : ?string,
     amount? : ?string,
     userIDToken? : ?string,
-    userRefreshToken? : ?string
+    userRefreshToken? : ?string,
+    fundingPaymentNonce? : ?string,
+    branded? : boolean
 |};
 
 const DEFAULT_AMOUNT = '0.00';
 
 // eslint-disable-next-line complexity
 export async function resolveWallet(req : ExpressRequest, gqlBatch : GraphQLBatchCall, { logger, clientID, merchantID, buttonSessionID,
-    currency, intent, commit, vault, disableFunding, disableCard, clientAccessToken, buyerCountry, buyerAccessToken, amount = DEFAULT_AMOUNT, userIDToken, userRefreshToken } : WalletOptions) : Promise<Wallet> {
+    currency, intent, commit, vault, disableFunding, disableCard, clientAccessToken, buyerCountry, buyerAccessToken, amount = DEFAULT_AMOUNT, 
+    userIDToken, userRefreshToken, fundingPaymentNonce, branded } : WalletOptions) : Promise<Wallet> {
 
     const wallet : Wallet = {
         paypal: {
@@ -233,7 +242,7 @@ export async function resolveWallet(req : ExpressRequest, gqlBatch : GraphQLBatc
                 variables: {
                     clientID, merchantID, currency, amount,
                     userIDToken, userRefreshToken, buyerAccessToken,
-                    vetted: false
+                    vetted: false, fundingPaymentNonce, branded
                 },
                 accessToken: clientAccessToken,
                 timeout:     WALLET_TIMEOUT

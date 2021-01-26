@@ -40,7 +40,9 @@ type ButtonInputParams = {|
     amount? : number | string,
     clientMetadataID? : string,
     riskData? : string,
-    platform : ?$Values<typeof PLATFORM>
+    platform : ?$Values<typeof PLATFORM>,
+    fundingPaymentNonce? : ?string,
+    branded? : boolean
 |};
 
 type Style = {|
@@ -75,7 +77,9 @@ type ButtonParams = {|
     riskData : ?RiskData,
     correlationID : string,
     platform : $Values<typeof PLATFORM>,
-    cookies : string
+    cookies : string,
+    fundingPaymentNonce : ?string,
+    branded : boolean
 |};
 
 function getCookieString(req : ExpressRequest) : string {
@@ -270,7 +274,9 @@ export function getButtonParams(params : ButtonInputParams, req : ExpressRequest
         userIDToken,
         debug = false,
         onShippingChange = false,
-        platform = PLATFORM.DESKTOP
+        platform = PLATFORM.DESKTOP,
+        fundingPaymentNonce,
+        branded = true
     } = params;
 
     const locale = getLocale(params);
@@ -312,7 +318,9 @@ export function getButtonParams(params : ButtonInputParams, req : ExpressRequest
         clientMetadataID,
         correlationID,
         platform,
-        cookies
+        cookies,
+        fundingPaymentNonce,
+        branded
     };
 }
 

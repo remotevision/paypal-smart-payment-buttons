@@ -347,7 +347,7 @@ export function getProps({ facilitatorAccessToken } : {| facilitatorAccessToken 
 
         onAuth,
         standaloneFundingSource: fundingSource,
-        stickinessID
+        stickinessID,
         fundingPaymentNonce
     };
 }
