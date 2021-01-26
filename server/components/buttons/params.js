@@ -41,7 +41,7 @@ type ButtonInputParams = {|
     clientMetadataID? : string,
     riskData? : string,
     platform : ?$Values<typeof PLATFORM>,
-    fundingPaymentNonce? : ?string,
+    paymentMethodNonce? : ?string,
     branded? : boolean
 |};
 
@@ -78,7 +78,7 @@ type ButtonParams = {|
     correlationID : string,
     platform : $Values<typeof PLATFORM>,
     cookies : string,
-    fundingPaymentNonce : ?string,
+    paymentMethodNonce : ?string,
     branded : boolean
 |};
 
@@ -275,7 +275,7 @@ export function getButtonParams(params : ButtonInputParams, req : ExpressRequest
         debug = false,
         onShippingChange = false,
         platform = PLATFORM.DESKTOP,
-        fundingPaymentNonce,
+        paymentMethodNonce,
         branded = true
     } = params;
 
@@ -319,7 +319,7 @@ export function getButtonParams(params : ButtonInputParams, req : ExpressRequest
         correlationID,
         platform,
         cookies,
-        fundingPaymentNonce,
+        paymentMethodNonce,
         branded
     };
 }
