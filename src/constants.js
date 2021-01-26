@@ -11,6 +11,7 @@ export const BUYER_INTENT = {
 export const HEADERS = {
     AUTHORIZATION: 'authorization',
     CONTENT_TYPE:  'content-type',
+    PREFER:        'prefer',
 
     ACCESS_TOKEN:   'x-paypal-internal-euat',
     CSRF_TOKEN:     'x-csrf-jwt',
@@ -41,6 +42,10 @@ export const DATA_ATTRIBUTES = {
 export const CLASS = {
     LOADING: 'paypal-button-loading',
     CLICKED: 'paypal-button-clicked'
+};
+
+export const PREFER = {
+    REPRESENTATION: 'return=representation'
 };
 
 export const ORDER_API_ERROR = {
@@ -116,10 +121,21 @@ export const FPTI_TRANSITION = {
     NATIVE_APP_SWITCH_ACK:              ('native_app_switch_ack' : 'native_app_switch_ack'),
     NATIVE_ERROR:                       ('native_app_switch_ack' : 'native_app_switch_ack'),
     NATIVE_SET_PROPS_ATTEMPT:           ('process_set_props_attempt' : 'process_set_props_attempt'),
+    NATIVE_APP_SWITCH_INELIGIBLE:       ('app_switch_ineligible' : 'app_switch_ineligible'),
     NATIVE_ATTEMPT_APP_SWITCH:          ('app_switch_attempted' : 'app_switch_attempted'),
     NATIVE_ATTEMPT_APP_SWITCH_ERRORED:  ('app_switch_attempted_errored' : 'app_switch_attempted_errored'),
+    NATIVE_CLOSING_POPUP:               ('native_closing_popup' : 'native_closing_popup'),
+    NATIVE_POPUP_CLOSED:                ('popup_closed' : 'popup_closed'),
+    NATIVE_POPUP_HASHCHANGE:            ('popup_hashchange' : 'popup_hashchange'),
+    NATIVE_POPUP_NO_OPENER:             ('popup_no_opener' : 'popup_no_opener'),
+    NATIVE_POPUP_FALLBACK:              ('popup_fallback' : 'popup_fallback'),
     NATIVE_POPUP_SHOWN:                 ('popup_shown' : 'popup_shown'),
-    NATIVE_POPUP_CLOSED:                ('process_popup_closed' : 'process_popup_closed'),
+    NATIVE_ON_APPROVE:                  ('native_onapprove' : 'native_onapprove'),
+    NATIVE_ON_CANCEL:                   ('native_oncancel' : 'native_oncancel'),
+    NATIVE_ON_CLICK_INVALID:            ('native_onclick_invalid' : 'native_onclick_invalid'),
+    NATIVE_ON_COMPLETE:                 ('native_oncomplete' : 'native_oncomplete'),
+    NATIVE_ON_ERROR:                    ('native_onerror' : 'native_onerror'),
+    NATIVE_ON_SHIPPING_CHANGE:          ('native_onshippingchange' : 'native_onshippingchange'),
 
     HONEY_IDENTIFY:                     ('honey_identify')
 };
@@ -128,7 +144,7 @@ export const FPTI_BUTTON_TYPE = {
     IFRAME: ('iframe' : 'iframe')
 };
 
-export const FTPI_CUSTOM_KEY = {
+export const FPTI_CUSTOM_KEY = {
     ERR_DESC:              ('int_error_desc' : 'int_error_desc'),
     HONEY_DEVICE_ID:       ('honey_device_id' : 'honey_device_id'),
     HONEY_SESSION_ID:      ('honey_session_id' : 'honey_session_id'),

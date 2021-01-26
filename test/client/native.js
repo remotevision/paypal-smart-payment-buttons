@@ -1614,16 +1614,21 @@ describe('native ios cases', () => {
 
             const mockWindow = getMockWindowOpen({
                 expectedUrl:        'https://history.paypal.com/smart/checkout/native/popup',
-                expectedQuery:      [ 'sdkMeta', 'sessionUID', 'buttonSessionID', 'parentDomain' ],
+                expectedQuery:      [ 'sdkMeta', 'buttonSessionID', 'parentDomain' ],
                 onOpen:             ({ win }) => {
                     postRobotMock.receive({
                         win,
                         name:   'awaitRedirect',
                         domain: 'https://history.paypal.com',
                         data:   {
-                            pageUrl: `${ window.location.href }#close`
+                            redirect: true,
+                            pageUrl:  `${ window.location.href }#close`
                         }
                     }).then(expect('awaitRedirectResponse', res => {
+                        if (res.redirect !== true) {
+                            throw new Error(`Expected redirect to be true`);
+                        }
+
                         if (!res.redirectUrl) {
                             throw new Error(`Expected native redirect url`);
                         }
@@ -1782,16 +1787,21 @@ describe('native ios cases', () => {
 
             const mockWindow = getMockWindowOpen({
                 expectedUrl:        'https://history.paypal.com/smart/checkout/native/popup',
-                expectedQuery:      [ 'sdkMeta', 'sessionUID', 'buttonSessionID', 'parentDomain' ],
+                expectedQuery:      [ 'sdkMeta', 'buttonSessionID', 'parentDomain' ],
                 onOpen:             ({ win }) => {
                     postRobotMock.receive({
                         win,
                         name:   'awaitRedirect',
                         domain: 'https://history.paypal.com',
                         data:   {
-                            pageUrl: `${ window.location.href }#close`
+                            redirect: true,
+                            pageUrl:  `${ window.location.href }#close`
                         }
                     }).then(expect('awaitRedirectResponse', res => {
+                        if (res.redirect !== true) {
+                            throw new Error(`Expected redirect to be true`);
+                        }
+                        
                         if (!res.redirectUrl) {
                             throw new Error(`Expected native redirect url`);
                         }
@@ -1890,16 +1900,21 @@ describe('native ios cases', () => {
             const mockWindow = getMockWindowOpen({
                 expectedUrl:        'https://history.paypal.com/smart/checkout/native/popup',
                 times:              2,
-                expectedQuery:      [ 'sdkMeta', 'sessionUID', 'buttonSessionID', 'parentDomain' ],
+                expectedQuery:      [ 'sdkMeta', 'buttonSessionID', 'parentDomain' ],
                 onOpen:             ({ win }) => {
                     postRobotMock.receive({
                         win,
                         name:   'awaitRedirect',
                         domain: 'https://history.paypal.com',
                         data:   {
-                            pageUrl: `${ window.location.href }#close`
+                            redirect: true,
+                            pageUrl:  `${ window.location.href }#close`
                         }
                     }).then(expect('awaitRedirectResponse', res => {
+                        if (res.redirect !== true) {
+                            throw new Error(`Expected redirect to be true`);
+                        }
+
                         if (!res.redirectUrl) {
                             throw new Error(`Expected native redirect url`);
                         }
@@ -2071,7 +2086,7 @@ describe('native ios cases', () => {
 
             const mockWindowConfig = {
                 expectedUrl:        'https://history.paypal.com/smart/checkout/native/popup',
-                expectedQuery:      [ 'sdkMeta', 'sessionUID', 'buttonSessionID', 'parentDomain' ],
+                expectedQuery:      [ 'sdkMeta', 'buttonSessionID', 'parentDomain' ],
                 times:              1,
                 onOpen:             ({ win }) => {
                     postRobotMock.receive({
@@ -2079,9 +2094,14 @@ describe('native ios cases', () => {
                         name:   'awaitRedirect',
                         domain: 'https://history.paypal.com',
                         data:   {
-                            pageUrl: `${ window.location.href }#close`
+                            redirect: true,
+                            pageUrl:  `${ window.location.href }#close`
                         }
                     }).then(expect('awaitRedirectResponse', res => {
+                        if (res.redirect !== true) {
+                            throw new Error(`Expected redirect to be true`);
+                        }
+
                         if (!res.redirectUrl) {
                             throw new Error(`Expected native redirect url`);
                         }
@@ -2197,16 +2217,21 @@ describe('native ios cases', () => {
 
             const mockWindow = getMockWindowOpen({
                 expectedUrl:        'https://history.paypal.com/smart/checkout/native/popup',
-                expectedQuery:      [ 'sdkMeta', 'sessionUID', 'buttonSessionID', 'parentDomain' ],
+                expectedQuery:      [ 'sdkMeta', 'buttonSessionID', 'parentDomain' ],
                 onOpen:             ({ win }) => {
                     postRobotMock.receive({
                         win,
                         name:   'awaitRedirect',
                         domain: 'https://history.paypal.com',
                         data:   {
-                            pageUrl: `${ window.location.href }#close`
+                            redirect: true,
+                            pageUrl:  `${ window.location.href }#close`
                         }
                     }).then(expect('awaitRedirectResponse', res => {
+                        if (res.redirect !== true) {
+                            throw new Error(`Expected redirect to be true`);
+                        }
+
                         if (!res.redirectUrl) {
                             throw new Error(`Expected native redirect url`);
                         }
@@ -2342,7 +2367,7 @@ describe('native ios cases', () => {
 
             const mockWindow = getMockWindowOpen({
                 expectedUrl:   'https://history.paypal.com/smart/checkout/native/popup',
-                expectedQuery: [ 'sdkMeta', 'sessionUID', 'buttonSessionID', 'parentDomain' ],
+                expectedQuery: [ 'sdkMeta', 'buttonSessionID', 'parentDomain' ],
                 onOpen:        ({ win }) => {
                     popupWin = win;
 
@@ -2351,9 +2376,14 @@ describe('native ios cases', () => {
                         name:   'awaitRedirect',
                         domain: 'https://history.paypal.com',
                         data:   {
-                            pageUrl: `${ window.location.href }#close`
+                            redirect: true,
+                            pageUrl:  `${ window.location.href }#close`
                         }
                     }).then(expect('awaitRedirectResponse', res => {
+                        if (res.redirect !== true) {
+                            throw new Error(`Expected redirect to be true`);
+                        }
+
                         if (!res.redirectUrl) {
                             throw new Error(`Expected native redirect url`);
                         }
@@ -2488,16 +2518,21 @@ describe('native ios cases', () => {
 
             const mockWindow = getMockWindowOpen({
                 expectedUrl:        'https://history.paypal.com/smart/checkout/native/popup',
-                expectedQuery:      [ 'sdkMeta', 'sessionUID', 'buttonSessionID', 'parentDomain' ],
+                expectedQuery:      [ 'sdkMeta', 'buttonSessionID', 'parentDomain' ],
                 onOpen:             ({ win }) => {
                     postRobotMock.receive({
                         win,
                         name:   'awaitRedirect',
                         domain: 'https://history.paypal.com',
                         data:   {
-                            pageUrl: `${ window.location.href }#close`
+                            redirect: true,
+                            pageUrl:  `${ window.location.href }#close`
                         }
                     }).then(expect('awaitRedirectResponse', res => {
+                        if (res.redirect !== true) {
+                            throw new Error(`Expected redirect to be true`);
+                        }
+
                         if (!res.redirectUrl) {
                             throw new Error(`Expected native redirect url`);
                         }
@@ -2620,16 +2655,21 @@ describe('native ios cases', () => {
 
             const mockWindow = getMockWindowOpen({
                 expectedUrl:        'https://history.paypal.com/smart/checkout/native/popup',
-                expectedQuery:      [ 'sdkMeta', 'sessionUID', 'buttonSessionID', 'parentDomain' ],
+                expectedQuery:      [ 'sdkMeta', 'buttonSessionID', 'parentDomain' ],
                 onOpen:             ({ win }) => {
                     postRobotMock.receive({
                         win,
                         name:   'awaitRedirect',
                         domain: 'https://history.paypal.com',
                         data:   {
-                            pageUrl: `${ window.location.href }#close`
+                            redirect: true,
+                            pageUrl:  `${ window.location.href }#close`
                         }
                     }).then(expect('awaitRedirectResponse', res => {
+                        if (res.redirect !== true) {
+                            throw new Error(`Expected redirect to be true`);
+                        }
+
                         if (!res.redirectUrl) {
                             throw new Error(`Expected native redirect url`);
                         }
@@ -2745,16 +2785,21 @@ describe('native ios cases', () => {
 
             const mockWindow = getMockWindowOpen({
                 expectedUrl:        'https://history.paypal.com/smart/checkout/native/popup',
-                expectedQuery:      [ 'sdkMeta', 'sessionUID', 'buttonSessionID', 'parentDomain' ],
+                expectedQuery:      [ 'sdkMeta', 'buttonSessionID', 'parentDomain' ],
                 onOpen:             ({ win }) => {
                     postRobotMock.receive({
                         win,
                         name:   'awaitRedirect',
                         domain: 'https://history.paypal.com',
                         data:   {
-                            pageUrl: `${ window.location.href }#close`
+                            redirect: true,
+                            pageUrl:  `${ window.location.href }#close`
                         }
-                    }).catch(expect('awaitRedirectError'));
+                    }).then(({ redirect }) => {
+                        if (redirect !== false) {
+                            throw new Error(`Expected redirect to be false`);
+                        }
+                    });
                 }
             });
 
@@ -2787,7 +2832,7 @@ describe('native ios cases', () => {
     });
 
     it('should render a button with createOrder rejecting, click the button, and render checkout via popup to native path in iOS', async () => {
-        return await wrapPromise(async ({ avoid, expectError, wait }) => {
+        return await wrapPromise(async ({ expect, avoid, expectError, wait }) => {
             window.navigator.mockUserAgent = IOS_SAFARI_USER_AGENT;
             window.xprops.enableNativeCheckout = true;
             window.xprops.platform = PLATFORM.MOBILE;
@@ -2797,14 +2842,15 @@ describe('native ios cases', () => {
 
             const mockWindow = getMockWindowOpen({
                 expectedUrl:        'https://history.paypal.com/smart/checkout/native/popup',
-                expectedQuery:      [ 'sdkMeta', 'sessionUID', 'buttonSessionID', 'parentDomain' ],
+                expectedQuery:      [ 'sdkMeta', 'buttonSessionID', 'parentDomain' ],
                 onOpen:             ({ win }) => {
                     postRobotMock.receive({
                         win,
                         name:   'awaitRedirect',
                         domain: 'https://history.paypal.com',
                         data:   {
-                            pageUrl: `${ window.location.href }#close`
+                            redirect: true,
+                            pageUrl:  `${ window.location.href }#close`
                         }
                     });
                 }
@@ -2817,6 +2863,7 @@ describe('native ios cases', () => {
 
             window.xprops.onCancel = mockAsyncProp(avoid('onCancel', promiseNoop));
             window.xprops.onApprove = mockAsyncProp(avoid('onApprove', promiseNoop));
+            window.xprops.onError = mockAsyncProp(expect('onError'));
 
             createButtonHTML();
 
@@ -2882,16 +2929,21 @@ describe('native ios cases', () => {
 
             const mockWindow = getMockWindowOpen({
                 expectedUrl:        'https://history.paypal.com/smart/checkout/native/popup',
-                expectedQuery:      [ 'sdkMeta', 'sessionUID', 'buttonSessionID', 'parentDomain' ],
+                expectedQuery:      [ 'sdkMeta', 'buttonSessionID', 'parentDomain' ],
                 onOpen:             ({ win }) => {
                     postRobotMock.receive({
                         win,
                         name:   'awaitRedirect',
                         domain: 'https://history.paypal.com',
                         data:   {
-                            pageUrl: `${ window.location.href }#close`
+                            redirect: true,
+                            pageUrl:  `${ window.location.href }#close`
                         }
                     }).then(expect('awaitRedirectResponse', res => {
+                        if (res.redirect !== true) {
+                            throw new Error(`Expected redirect to be true`);
+                        }
+
                         if (!res.redirectUrl) {
                             throw new Error(`Expected native redirect url`);
                         }
@@ -2968,6 +3020,157 @@ describe('native ios cases', () => {
         });
     });
 
+    it('should render a button with eligibility rejecting, click the button, and render checkout via popup to web path in iOS', async () => {
+        return await wrapPromise(async ({ expect, avoid, wait }) => {
+            window.navigator.mockUserAgent = IOS_SAFARI_USER_AGENT;
+            window.xprops.enableNativeCheckout = false;
+            window.xprops.platform = PLATFORM.MOBILE;
+            delete window.xprops.onClick;
+
+            const postRobotMock = getPostRobotMock();
+
+            const orderID = generateOrderID();
+            const payerID = 'AAABBBCCC';
+
+            window.xprops.createOrder = mockAsyncProp(expect('createOrder', async () => {
+                return ZalgoPromise.try(() => {
+                    return orderID;
+                });
+            }), 50);
+
+            window.xprops.onClick = mockAsyncProp(expect('onClick', async (data, actions) => {
+                return ZalgoPromise.delay(200).then(actions.resolve);
+            }));
+
+            window.xprops.onCancel = avoid('onCancel');
+
+            window.xprops.onApprove = mockAsyncProp(expect('onApprove', async (data) => {
+                if (data.orderID !== orderID) {
+                    throw new Error(`Expected orderID to be ${ orderID }, got ${ data.orderID }`);
+                }
+
+                if (data.payerID !== payerID) {
+                    throw new Error(`Expected payerID to be ${ payerID }, got ${ data.payerID }`);
+                }
+            }));
+
+            const mockWindow = getMockWindowOpen({
+                expectedUrl:        'https://history.paypal.com/smart/checkout/native/popup',
+                expectedQuery:      [ 'sdkMeta', 'buttonSessionID', 'parentDomain' ],
+                onOpen:             ({ win }) => {
+                    postRobotMock.receive({
+                        win,
+                        name:   'awaitRedirect',
+                        domain: 'https://history.paypal.com',
+                        data:   {
+                            redirect: true,
+                            pageUrl:  `${ window.location.href }#close`
+                        }
+                    }).then(expect('awaitRedirectResponse', res => {
+                        if (res.redirect !== true) {
+                            throw new Error(`Expected redirect to be true`);
+                        }
+
+                        if (!res.redirectUrl) {
+                            throw new Error(`Expected native redirect url`);
+                        }
+
+                        if (res.redirectUrl.indexOf('/smart/checkout/native/fallback') === -1) {
+                            throw new Error(`Expected native popup to redirect to fallback url, got ${ res.redirectUrl }`);
+                        }
+
+                        const redirectQuery = parseQuery(res.redirectUrl.split('?')[1]);
+
+                        if (!redirectQuery.sdkMeta) {
+                            throw new Error(`Expected sdkMeta to be passed in url`);
+                        }
+
+                        if (!redirectQuery.sessionUID) {
+                            throw new Error(`Expected sessionUID to be passed in url`);
+                        }
+
+                        if (!redirectQuery.pageUrl) {
+                            throw new Error(`Expected pageUrl to be passed in url`);
+                        }
+
+                        if (!redirectQuery.buttonSessionID) {
+                            throw new Error(`Expected buttonSessionID to be passed in url`);
+                        }
+
+                        if (!redirectQuery.orderID) {
+                            throw new Error(`Expected orderID to be passed in url`);
+                        }
+
+                        if (!redirectQuery.env) {
+                            throw new Error(`Expected env to be passed in url`);
+                        }
+
+                        postRobotMock.receive({
+                            win,
+                            name:   'detectWebSwitch',
+                            domain: 'https://www.paypal.com'
+                        });
+                    }));
+                }
+            });
+
+            mockFunction(window.paypal, 'Checkout', expect('Checkout', ({ original: CheckoutOriginal, args: [ checkoutProps ] }) => {
+
+                if (checkoutProps.window !== mockWindow.getWindow()) {
+                    throw new Error(`Expected win passed to checkout to match win sent in onLoad`);
+                }
+
+                const checkoutInstance = CheckoutOriginal(checkoutProps);
+
+                mockFunction(checkoutInstance, 'renderTo', expect('renderTo', async ({ original: renderToOriginal, args }) => {
+                    return checkoutProps.createOrder().then(id => {
+                        if (id !== orderID) {
+                            throw new Error(`Expected orderID to be ${ orderID }, got ${ id }`);
+                        }
+                        return renderToOriginal(...args);
+                    });
+                }));
+
+                return checkoutInstance;
+            }));
+
+            createButtonHTML();
+
+            await mockSetupButton({
+                eligibility: {
+                    cardFields: false,
+                    native:     true
+                }
+            });
+
+            const gqlMock = getGraphQLApiMock({
+                extraHandler: expect('firebaseGQLCall', ({ data }) => {
+                    if (data.query.includes('query GetNativeEligibility')) {
+                        return {
+                            data: {
+                                mobileSDKEligibility: {
+                                    paypal: {
+                                        eligibility: false
+                                    },
+                                    venmo: {
+                                        eligibility: false
+                                    }
+                                }
+                            }
+                        };
+                    }
+                })
+            }).expectCalls();
+
+            await clickButton(FUNDING.PAYPAL);
+            await wait();
+
+            mockWindow.done();
+            postRobotMock.done();
+            gqlMock.done();
+        });
+    });
+
     it('should render a button with createOrder and onClick rejecting, click the button, and render checkout via popup to web path in iOS', async () => {
         return await wrapPromise(async ({ expect, avoid, wait }) => {
             window.navigator.mockUserAgent = IOS_SAFARI_USER_AGENT;
@@ -2979,16 +3182,21 @@ describe('native ios cases', () => {
 
             const mockWindow = getMockWindowOpen({
                 expectedUrl:        'https://history.paypal.com/smart/checkout/native/popup',
-                expectedQuery:      [ 'sdkMeta', 'sessionUID', 'buttonSessionID', 'parentDomain' ],
+                expectedQuery:      [ 'sdkMeta', 'buttonSessionID', 'parentDomain' ],
                 onOpen:             ({ win }) => {
                     postRobotMock.receive({
                         win,
                         name:   'awaitRedirect',
                         domain: 'https://history.paypal.com',
                         data:   {
-                            pageUrl: `${ window.location.href }#close`
+                            redirect: true,
+                            pageUrl:  `${ window.location.href }#close`
                         }
-                    }).catch(expect('awaitRedirectResponseError'));
+                    }).then(res => {
+                        if (res.redirect !== false) {
+                            throw new Error(`Expected redirect to be false`);
+                        }
+                    });
                 }
             });
 
@@ -3060,16 +3268,21 @@ describe('native ios cases', () => {
 
             const mockWindow = getMockWindowOpen({
                 expectedUrl:        'https://history.paypal.com/smart/checkout/venmo/popup',
-                expectedQuery:      [ 'sdkMeta', 'sessionUID', 'buttonSessionID', 'parentDomain' ],
+                expectedQuery:      [ 'sdkMeta', 'buttonSessionID', 'parentDomain' ],
                 onOpen:             ({ win }) => {
                     postRobotMock.receive({
                         win,
                         name:   'awaitRedirect',
                         domain: 'https://history.paypal.com',
                         data:   {
-                            pageUrl: `${ window.location.href }#close`
+                            redirect: true,
+                            pageUrl:  `${ window.location.href }#close`
                         }
                     }).then(expect('awaitRedirectResponse', res => {
+                        if (res.redirect !== true) {
+                            throw new Error(`Expected redirect to be true`);
+                        }
+
                         if (!res.redirectUrl) {
                             throw new Error(`Expected native redirect url`);
                         }
@@ -3217,16 +3430,21 @@ describe('native ios cases', () => {
 
             const mockWindow = getMockWindowOpen({
                 expectedUrl:        'https://history.paypal.com/smart/checkout/native/popup',
-                expectedQuery:      [ 'sdkMeta', 'sessionUID', 'buttonSessionID', 'parentDomain' ],
+                expectedQuery:      [ 'sdkMeta', 'buttonSessionID', 'parentDomain' ],
                 onOpen:             ({ win }) => {
                     postRobotMock.receive({
                         win,
                         name:   'awaitRedirect',
                         domain: 'https://history.paypal.com',
                         data:   {
-                            pageUrl: `${ window.location.href }#close`
+                            redirect: true,
+                            pageUrl:  `${ window.location.href }#close`
                         }
                     }).then(expect('awaitRedirectResponse', res => {
+                        if (res.redirect !== true) {
+                            throw new Error(`Expected redirect to be true`);
+                        }
+
                         if (!res.redirectUrl) {
                             throw new Error(`Expected native redirect url`);
                         }
