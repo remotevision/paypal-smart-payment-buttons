@@ -40,7 +40,9 @@ type ButtonInputParams = {|
     amount? : number | string,
     clientMetadataID? : string,
     riskData? : string,
-    platform : ?$Values<typeof PLATFORM>
+    platform : ?$Values<typeof PLATFORM>,
+    paymentMethodNonce? : ?string,
+    branded? : boolean
 |};
 
 type Style = {|
@@ -76,7 +78,7 @@ type ButtonParams = {|
     correlationID : string,
     platform : $Values<typeof PLATFORM>,
     cookies : string,
-    paymentMethodNonce : string,
+    paymentMethodNonce : ?string,
     branded : boolean
 |};
 
@@ -190,29 +192,6 @@ function getFundingEligibilityParam(req : ExpressRequest) : FundingEligibilityTy
     };
 }
 
-
-function getPaymentMethodNonce(req : ExpressRequest) : string {
-    let nonce = req.query && req.query.paymentMethodNonce;
-
-    if (!nonce || typeof nonce !== 'string') {
-        nonce = '';
-    }
-
-    return nonce;
-}
-
-
-function getBranded(req : ExpressRequest) : boolean {
-    let branded = req.query && req.query.branded;
-
-    // default to branded payments
-    if (!branded || typeof branded !== 'boolean') {
-        branded = true;
-    }
-
-    return branded;
-}
-
 function getRiskDataParam(req : ExpressRequest) : ?RiskData {
     const serializedRiskData = req.query.riskData;
 
@@ -295,7 +274,9 @@ export function getButtonParams(params : ButtonInputParams, req : ExpressRequest
         userIDToken,
         debug = false,
         onShippingChange = false,
-        platform = PLATFORM.DESKTOP
+        platform = PLATFORM.DESKTOP,
+        paymentMethodNonce,
+        branded = true
     } = params;
 
     const locale = getLocale(params);
@@ -305,8 +286,6 @@ export function getButtonParams(params : ButtonInputParams, req : ExpressRequest
     const buyerCountry = getBuyerCountry(req, params);
 
     const basicFundingEligibility = getFundingEligibilityParam(req);
-    const paymentMethodNonce = getPaymentMethodNonce(req);
-    const branded = getBranded(req);
     const riskData = getRiskDataParam(req);
     const correlationID = req.correlationId || '';
 

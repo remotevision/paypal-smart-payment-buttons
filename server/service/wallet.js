@@ -143,7 +143,10 @@ function buildSmartWalletQuery() : string {
         $userRefreshToken: 'String',
         $userAccessToken:  'String',
 
-        $vetted:           'Boolean'
+        $vetted:           'Boolean',
+
+        $paymentMethodNonce: 'String',
+        $branded:             'Boolean'
     };
 
     const Inputs = {
@@ -156,7 +159,10 @@ function buildSmartWalletQuery() : string {
         userRefreshToken: '$userRefreshToken',
         userAccessToken:  '$userAccessToken',
 
-        vetted:           '$vetted'
+        vetted:           '$vetted',
+
+        paymentMethodNonce: '$paymentMethodNonce',
+        branded:             '$branded'
     };
 
     const getSmartWalletInstrumentQuery = () => {
@@ -213,7 +219,8 @@ const DEFAULT_AMOUNT = '0.00';
 
 // eslint-disable-next-line complexity
 export async function resolveWallet(req : ExpressRequest, gqlBatch : GraphQLBatchCall, { logger, clientID, merchantID, buttonSessionID,
-    currency, intent, commit, vault, disableFunding, disableCard, clientAccessToken, buyerCountry, buyerAccessToken, amount = DEFAULT_AMOUNT, userIDToken, userRefreshToken, paymentMethodNonce, branded } : WalletOptions) : Promise<Wallet> {
+    currency, intent, commit, vault, disableFunding, disableCard, clientAccessToken, buyerCountry, buyerAccessToken, amount = DEFAULT_AMOUNT,
+    userIDToken, userRefreshToken, paymentMethodNonce, branded } : WalletOptions) : Promise<Wallet> {
 
     const wallet : Wallet = {
         paypal: {
