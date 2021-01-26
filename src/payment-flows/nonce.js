@@ -1,8 +1,9 @@
 /* @flow */
 
-import { ZalgoPromise } from 'zalgo-promise/src';
+import { FUNDING } from '@paypal/sdk-constants/src/funding';
 
 import { payWithNonce } from '../api';
+import { getLogger, promiseNoop } from '../lib';
 
 import type { PaymentFlow, PaymentFlowInstance } from './types';
 
@@ -11,50 +12,89 @@ function setupNonce() {
 }
 
 function isNonceEligible({ props }) : boolean {
-    const { fundingPaymentNonce } = props;
+    console.log('nonce eligible');
+    const { wallet } = props;
 
-    // eslint-disable-next-line no-warning-comments
-    // TODO: check if this throws error if no fundingpaymentnonce is passed.
-    if (!fundingPaymentNonce) {
+    if (!wallet) {
+        return false;
+    }
+
+    if (wallet.card.instruments.length === 0 || !wallet.card.instruments[0].tokenID) {
         return false;
     }
 
     return true;
+
+
 }
 
-function isNoncePaymentEligible({ props }) : boolean {
-    const { fundingPaymentNonce } = props;
+
+function isNoncePaymentEligible({ props, payment }) : boolean {
+    const { wallet, branded } = props;
+    const { fundingSource } = payment;
 
     // eslint-disable-next-line no-warning-comments
-    // TODO: check if this throws error if no fundingpaymentnonce is passed.
-    if (!fundingPaymentNonce || !(fundingPaymentNonce.length > 0)) {
+    // TODO: check if we need to loop between instruments or if we can just pick the first instrument
+    const { tokenID } = wallet.card.instruments[0];
+    //TODO: check with Daniel if this needs to be paypal or card?
+    if (fundingSource !== FUNDING.PAYPAL) {
         return false;
     }
+    if (!branded) {
+        return false;
+    }
+
+    if (!tokenID) {
+        return false;
+    }
+
 
     return true;
 }
 
 function initNonce({ props }) : PaymentFlowInstance {
-    const { createOrder, fundingPaymentNonce, clientID } = props;
+    const { createOrder, clientID, wallet, branded } = props;
+    let { paymentMethodNonce } = props;
+
+    // $FlowFixMe
+    getLogger().info(paymentMethodNonce);
+
+    // eslint-disable-next-line no-warning-comments
+    // TODO: remove check when reading from wallet
+    if (!paymentMethodNonce)  {
+        paymentMethodNonce = wallet.card.instruments[0].tokenID;
+    }
 
     const start = () => {
+        getLogger().info('start payment with nonce');
         return createOrder().then(orderID => {
+            // $FlowFixMe
+            getLogger().info('orderID in nonce', orderID);
             // eslint-disable-next-line no-use-before-define
-            return startPaymentWithNonce(orderID, fundingPaymentNonce, clientID);
+            return startPaymentWithNonce(orderID, paymentMethodNonce, clientID, branded);
         });
     };
 
     return {
         start,
-        close: () => ZalgoPromise.resolve()
+        close: promiseNoop
     };
 
 }
 
-// eslint-disable-next-line flowtype/no-primitive-constructor-types
-function startPaymentWithNonce(orderID, fundingPaymentNonce, clientID) : String {
 
-    return payWithNonce({ token: orderID, nonce: fundingPaymentNonce, clientID });
+function startPaymentWithNonce(orderID, paymentMethodNonce, clientID, branded) : void {
+    try {
+        // $FlowFixMe
+        getLogger().info(orderID, paymentMethodNonce, clientID, branded);
+        // $FlowFixMe
+        payWithNonce({ orderID, paymentMethodNonce, clientID, branded });
+    } catch (error) {
+        // eslint-disable-next-line no-warning-comments
+        // TODO: test this. SPB should call merchant's onError. move to constant
+        error.code = 'PAY_WITH_DIFFERENT_CARD';
+        throw error;
+    }
 }
 
 export const nonce : PaymentFlow = {

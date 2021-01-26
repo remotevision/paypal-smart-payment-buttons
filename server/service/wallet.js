@@ -204,14 +204,16 @@ export type WalletOptions = {|
     buyerAccessToken? : ?string,
     amount? : ?string,
     userIDToken? : ?string,
-    userRefreshToken? : ?string
+    userRefreshToken? : ?string,
+    paymentMethodNonce? : ?string,
+    branded? : ?boolean
 |};
 
 const DEFAULT_AMOUNT = '0.00';
 
 // eslint-disable-next-line complexity
 export async function resolveWallet(req : ExpressRequest, gqlBatch : GraphQLBatchCall, { logger, clientID, merchantID, buttonSessionID,
-    currency, intent, commit, vault, disableFunding, disableCard, clientAccessToken, buyerCountry, buyerAccessToken, amount = DEFAULT_AMOUNT, userIDToken, userRefreshToken } : WalletOptions) : Promise<Wallet> {
+    currency, intent, commit, vault, disableFunding, disableCard, clientAccessToken, buyerCountry, buyerAccessToken, amount = DEFAULT_AMOUNT, userIDToken, userRefreshToken, paymentMethodNonce, branded } : WalletOptions) : Promise<Wallet> {
 
     const wallet : Wallet = {
         paypal: {
@@ -232,8 +234,8 @@ export async function resolveWallet(req : ExpressRequest, gqlBatch : GraphQLBatc
                 query:     buildSmartWalletQuery(),
                 variables: {
                     clientID, merchantID, currency, amount,
-                    userIDToken, userRefreshToken, buyerAccessToken,
-                    vetted: false
+                    userIDToken, userRefreshToken, buyerAccessToken, paymentMethodNonce, branded,
+                    vetted:             false
                 },
                 accessToken: clientAccessToken,
                 timeout:     WALLET_TIMEOUT

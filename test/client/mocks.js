@@ -32,7 +32,6 @@ export function cancelablePromise<T>(promise : ZalgoPromise<T>) : CancelableZalg
 
 export function setupMocks() {
     delete window.navigator.mockUserAgent;
-
     const body = document.body;
 
     if (!body) {
@@ -1473,7 +1472,7 @@ export function getMockWindowOpen({ expectedUrl, times = 1, appSwitch = false, e
 
         const onLoad = () => {
             if (!win) {
-                throw new Error(`Expecred win to be set`);
+                throw new Error(`Expected win to be set`);
             }
 
             const [ stringUrl, stringQuery ] = currentUrl.split('?');
@@ -1687,13 +1686,13 @@ export function renderSmartFieldsMock({
 } : MockFieldsOptions) : SmartFieldsMock {
     window.frames = [
         {
+            ...window,
             exports: {
                 name:    'smart-fields',
                 fundingSource,
                 isValid,
                 confirm
-            },
-            ...window
+            }
         }
     ];
 

@@ -8,7 +8,7 @@ import { values, constHas } from 'belter';
 
 import { HTTP_HEADER, ERROR_CODE } from '../../config';
 import type { ExpressRequest, ExpressResponse, LocaleType, RiskData } from '../../types';
-import { makeError } from '../../lib';
+import { makeError, getCSPNonce } from '../../lib';
 
 import { SPB_QUERY_KEYS } from './constants';
 
@@ -75,18 +75,10 @@ type ButtonParams = {|
     riskData : ?RiskData,
     correlationID : string,
     platform : $Values<typeof PLATFORM>,
-    cookies : string
+    cookies : string,
+    paymentMethodNonce : string,
+    branded : boolean
 |};
-
-function getCSPNonce(res : ExpressResponse) : string {
-    let nonce = res.locals && res.locals.nonce;
-
-    if (!nonce || typeof nonce !== 'string') {
-        nonce = '';
-    }
-
-    return nonce;
-}
 
 function getCookieString(req : ExpressRequest) : string {
     try {
@@ -198,6 +190,29 @@ function getFundingEligibilityParam(req : ExpressRequest) : FundingEligibilityTy
     };
 }
 
+
+function getPaymentMethodNonce(req : ExpressRequest) : string {
+    let nonce = req.query && req.query.paymentMethodNonce;
+
+    if (!nonce || typeof nonce !== 'string') {
+        nonce = '';
+    }
+
+    return nonce;
+}
+
+
+function getBranded(req : ExpressRequest) : boolean {
+    let branded = req.query && req.query.branded;
+
+    // default to branded payments
+    if (!branded || typeof branded !== 'boolean') {
+        branded = true;
+    }
+
+    return branded;
+}
+
 function getRiskDataParam(req : ExpressRequest) : ?RiskData {
     const serializedRiskData = req.query.riskData;
 
@@ -290,6 +305,8 @@ export function getButtonParams(params : ButtonInputParams, req : ExpressRequest
     const buyerCountry = getBuyerCountry(req, params);
 
     const basicFundingEligibility = getFundingEligibilityParam(req);
+    const paymentMethodNonce = getPaymentMethodNonce(req);
+    const branded = getBranded(req);
     const riskData = getRiskDataParam(req);
     const correlationID = req.correlationId || '';
 
@@ -322,7 +339,9 @@ export function getButtonParams(params : ButtonInputParams, req : ExpressRequest
         clientMetadataID,
         correlationID,
         platform,
-        cookies
+        cookies,
+        paymentMethodNonce,
+        branded
     };
 }
 

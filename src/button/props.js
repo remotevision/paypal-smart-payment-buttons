@@ -12,7 +12,7 @@ import type { CreateOrder, XCreateOrder, CreateBillingAgreement, XCreateBillingA
     OnApprove, XOnApprove, OnCancel, XOnCancel, OnClick, XOnClick, OnShippingChange, XOnShippingChange, XOnError, OnError,
     XGetPopupBridge, GetPopupBridge, XCreateSubscription, RememberFunding, GetPageURL, OnAuth, GetQueriedEligibleFunding } from '../props';
 import { type FirebaseConfig } from '../api';
-import { getNonce, createExperiment } from '../lib';
+import { getNonce, createExperiment, getStorageID, isStorageStateFresh } from '../lib';
 import { getOnInit } from '../props/onInit';
 import { getCreateOrder } from '../props/createOrder';
 import { getOnApprove } from '../props/onApprove';
@@ -49,7 +49,7 @@ export type ButtonXProps = {|
 
     sessionID : string,
     buttonSessionID : string,
-    clientID : ?string,
+    clientID : string,
     partnerAttributionID : ?string,
     correlationID : string,
     sdkCorrelationID? : string,
@@ -60,6 +60,7 @@ export type ButtonXProps = {|
     commit : boolean,
     intent : $Values<typeof INTENT>,
     currency : $Values<typeof CURRENCY>,
+    wallet : Wallet,
 
     clientAccessToken : ?string,
     buyerCountry : $Values<typeof COUNTRY>,
@@ -83,7 +84,7 @@ export type ButtonXProps = {|
     enableFunding : ?$ReadOnlyArray<$Values<typeof FUNDING>>,
     disableCard : ?$ReadOnlyArray<$Values<typeof CARD>>,
     getQueriedEligibleFunding? : GetQueriedEligibleFunding,
-    fundingPaymentNonce : string,
+    storageID? : string,
 
     stageHost : ?string,
     apiStageHost : ?string,
@@ -98,7 +99,10 @@ export type ButtonXProps = {|
     onCancel : XOnCancel,
     onClick : XOnClick,
     onError : XOnError,
-    onShippingChange : ?XOnShippingChange
+    onShippingChange : ?XOnShippingChange,
+
+    paymentMethodNonce : string,
+    branded : boolean
 |};
 
 export type ButtonProps = {|
@@ -109,7 +113,7 @@ export type ButtonProps = {|
 
     sessionID : string,
     buttonSessionID : string,
-    clientID : ?string,
+    clientID : string,
     partnerAttributionID : ?string,
     clientMetadataID : ?string,
     sdkCorrelationID : string,
@@ -119,6 +123,7 @@ export type ButtonProps = {|
     commit : boolean,
     currency : $Values<typeof CURRENCY>,
     intent : $Values<typeof INTENT>,
+    wallet : Wallet,
 
     clientAccessToken : ?string,
 
@@ -133,8 +138,8 @@ export type ButtonProps = {|
     getParent : () => CrossDomainWindowType,
     fundingSource : ?$Values<typeof FUNDING>,
     standaloneFundingSource : ?$Values<typeof FUNDING>,
-    disableFunding : ?$ReadOnlyArray<$Values<typeof FUNDING>>,
-    enableFunding : ?$ReadOnlyArray<$Values<typeof FUNDING>>,
+    disableFunding : $ReadOnlyArray<$Values<typeof FUNDING>>,
+    enableFunding : $ReadOnlyArray<$Values<typeof FUNDING>>,
     disableCard : ?$ReadOnlyArray<$Values<typeof CARD>>,
     getQueriedEligibleFunding : GetQueriedEligibleFunding,
 
@@ -143,6 +148,7 @@ export type ButtonProps = {|
 
     amount : ?string,
     userIDToken : ?string,
+    stickinessID : string,
 
     onInit : OnInit,
     onError : OnError,
@@ -157,18 +163,22 @@ export type ButtonProps = {|
 
     onCancel : OnCancel,
     onShippingChange : ?OnShippingChange,
-    onAuth : OnAuth
+    onAuth : OnAuth,
+
+    paymentMethodNonce : string,
+    branded : boolean
 |};
 
+// eslint-disable-next-line complexity
 export function getProps({ facilitatorAccessToken } : {| facilitatorAccessToken : string |}) : ButtonProps {
 
     const xprops : ButtonXProps = window.xprops;
     const upgradeLSATExperiment = createExperiment(UPGRADE_LSAT_RAMP.EXP_NAME, UPGRADE_LSAT_RAMP.RAMP);
 
-    const {
+    let {
         uid,
         env,
-        vault,
+        vault = false,
         commit,
         locale,
         platform,
@@ -203,11 +213,18 @@ export function getProps({ facilitatorAccessToken } : {| facilitatorAccessToken 
         enableFunding,
         disableFunding,
         disableCard,
-        getQueriedEligibleFunding = () => ZalgoPromise.resolve([])
+        wallet,
+        paymentMethodNonce,
+        branded,
+        getQueriedEligibleFunding = () => ZalgoPromise.resolve([]),
+        storageID
     } = xprops;
 
     const onInit = getOnInit({ onInit: xprops.onInit });
     const merchantDomain = (typeof getParentDomain === 'function') ? getParentDomain() : 'unknown';
+
+    enableFunding = enableFunding || [];
+    disableFunding = disableFunding || [];
 
     const onClick = getOnClick({ onClick: xprops.onClick });
 
@@ -255,6 +272,10 @@ export function getProps({ facilitatorAccessToken } : {| facilitatorAccessToken 
         }
     }
 
+    const stickinessID = (storageID && isStorageStateFresh())
+        ? storageID
+        : getStorageID();
+
     const createBillingAgreement = getCreateBillingAgreement({ createBillingAgreement: xprops.createBillingAgreement });
     const createSubscription = getCreateSubscription({ createSubscription: xprops.createSubscription, partnerAttributionID, merchantID, clientID }, { facilitatorAccessToken });
 
@@ -265,20 +286,6 @@ export function getProps({ facilitatorAccessToken } : {| facilitatorAccessToken 
     const onCancel = getOnCancel({ onCancel: xprops.onCancel, onError }, { createOrder });
     const onShippingChange = getOnShippingChange({ onShippingChange: xprops.onShippingChange, partnerAttributionID, upgradeLSAT }, { facilitatorAccessToken, createOrder });
     const onAuth = getOnAuth({ facilitatorAccessToken, createOrder, upgradeLSAT });
-
-    // eslint-disable-next-line no-warning-comments
-    // TODO: this should move to its own getFundingPaymentNonce
-    const fundingPaymentNonce = xprops.fundingPaymentNonce;
-
-    // eslint-disable-next-line no-warning-comments
-    // TODO: handle click contingencies here. ensure validation is done before passing back createOrder
-    window.exports = {
-        'name':        'smart-payment-buttons',
-        createOrder,
-        onApprove,
-        onError,
-        onCancel
-    };
 
     return {
         uid,
@@ -301,6 +308,7 @@ export function getProps({ facilitatorAccessToken } : {| facilitatorAccessToken 
         platform,
         currency,
         intent,
+        wallet,
 
         getPopupBridge,
         getPrerenderDetails,
@@ -336,7 +344,9 @@ export function getProps({ facilitatorAccessToken } : {| facilitatorAccessToken 
 
         onAuth,
         standaloneFundingSource: fundingSource,
-        fundingPaymentNonce
+        paymentMethodNonce,
+        branded,
+        stickinessID
     };
 }
 
@@ -354,17 +364,17 @@ export function getComponents() : Components {
 }
 
 export type Config = {|
-    version : string,
+    sdkVersion : string,
     cspNonce : ?string,
     firebase : ?FirebaseConfig
 |};
 
 export function getConfig({ serverCSPNonce, firebaseConfig } : {| serverCSPNonce : ?string, firebaseConfig : ?FirebaseConfig |}) : Config {
     const cspNonce = serverCSPNonce || getNonce();
-    const { version } = paypal;
+    const { version: sdkVersion } = paypal;
 
     return {
-        version,
+        sdkVersion,
         cspNonce,
         firebase: firebaseConfig
     };
@@ -422,3 +432,4 @@ export function getServiceData({ facilitatorAccessToken, sdkMeta, content, buyer
         cookies
     };
 }
+

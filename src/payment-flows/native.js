@@ -1,18 +1,19 @@
 /* @flow */
-/* eslint max-lines: off */
+/* eslint max-lines: off, max-nested-callbacks: off */
 
-import { extendUrl, uniqueID, getUserAgent, supportsPopups, memoize, stringifyError, isIos, isAndroid,
-    isSafari, isChrome, stringifyErrorMessage, cleanup, once, noop } from 'belter/src';
+import { extendUrl, uniqueID, getUserAgent, supportsPopups, memoize, stringifyError,
+    stringifyErrorMessage, cleanup, once, noop } from 'belter/src';
 import { ZalgoPromise } from 'zalgo-promise/src';
-import { PLATFORM, ENV, FPTI_KEY } from '@paypal/sdk-constants/src';
+import { PLATFORM, ENV, FPTI_KEY, FUNDING } from '@paypal/sdk-constants/src';
 import { type CrossDomainWindowType, isWindowClosed, onCloseWindow, getDomain } from 'cross-domain-utils/src';
 
 import type { ButtonProps } from '../button/props';
-import { NATIVE_CHECKOUT_URI, WEB_CHECKOUT_URI, NATIVE_CHECKOUT_POPUP_URI } from '../config';
+import { WEB_CHECKOUT_URI } from '../config';
 import { getNativeEligibility, firebaseSocket, type MessageSocket, type FirebaseConfig } from '../api';
-import { getLogger, promiseOne, promiseNoop } from '../lib';
-import { USER_ACTION, FPTI_STATE, FPTI_TRANSITION, FTPI_CUSTOM_KEY } from '../constants';
+import { getLogger, promiseOne, promiseNoop, isIOSSafari, isAndroidChrome, getStorageState, getStickinessID } from '../lib';
+import { USER_ACTION, FPTI_STATE, FPTI_TRANSITION, FPTI_CUSTOM_KEY } from '../constants';
 import { type OnShippingChangeData } from '../props/onShippingChange';
+import type { NativePopupInputParams } from '../../server/components/native/params';
 
 import type { PaymentFlow, PaymentFlowInstance, SetupOptions, IsEligibleOptions, IsPaymentEligibleOptions, InitOptions } from './types';
 import { checkout } from './checkout';
@@ -40,12 +41,37 @@ const SOCKET_MESSAGE = {
     ON_ERROR:           'onError'
 };
 
-const NATIVE_DOMAIN = 'https://www.paypal.com';
-const NATIVE_DOMAIN_SANDBOX = 'https://www.paypal.com';
+const NATIVE_DOMAIN = {
+    [ ENV.TEST ]:       'https://www.paypal.com',
+    [ ENV.LOCAL ]:      'https://www.paypal.com',
+    [ ENV.STAGE ]:      'https://www.paypal.com',
+    [ ENV.SANDBOX ]:    'https://www.paypal.com',
+    [ ENV.PRODUCTION ]: 'https://www.paypal.com'
+};
 
 // Popup domain needs to be different than native domain for app switch to work on iOS
-const NATIVE_POPUP_DOMAIN = 'https://history.paypal.com';
-const NATIVE_POPUP_DOMAIN_SANDBOX = 'https://www.sandbox.paypal.com';
+const NATIVE_POPUP_DOMAIN = {
+    [ ENV.TEST ]:       'https://history.paypal.com',
+    [ ENV.LOCAL ]:      'https://history.paypal.com',
+    [ ENV.STAGE ]:      'https://history.paypal.com',
+    [ ENV.SANDBOX ]:    'https://www.sandbox.paypal.com',
+    [ ENV.PRODUCTION ]: 'https://history.paypal.com'
+};
+
+const NATIVE_CHECKOUT_URI : { [ $Values<typeof FUNDING> ] : string } = {
+    [ FUNDING.PAYPAL ]: '/smart/checkout/native',
+    [ FUNDING.VENMO ]:  '/smart/checkout/venmo'
+};
+
+const NATIVE_CHECKOUT_POPUP_URI : { [$Values<typeof FUNDING> ] : string } = {
+    [ FUNDING.PAYPAL ]: '/smart/checkout/native/popup',
+    [ FUNDING.VENMO ]:  '/smart/checkout/venmo/popup'
+};
+
+const NATIVE_CHECKOUT_FALLBACK_URI : { [$Values<typeof FUNDING> ] : string } = {
+    [ FUNDING.PAYPAL ]: '/smart/checkout/native/fallback',
+    [ FUNDING.VENMO ]:  '/smart/checkout/venmo/fallback'
+};
 
 let clean;
 
@@ -69,26 +95,37 @@ const getNativeSocket = memoize(({ sessionUID, firebaseConfig, version } : Nativ
         config:           firebaseConfig
     });
     nativeSocket.onError(err => {
-        getLogger().error('native_socket_error', { err: stringifyError(err) })
-            .track({
-                [FPTI_KEY.STATE]:           FPTI_STATE.BUTTON,
-                [FPTI_KEY.TRANSITION]:      FPTI_TRANSITION.NATIVE_APP_SWITCH_ACK,
-                [FTPI_CUSTOM_KEY.ERR_DESC]: `[Native Socket Error] ${ stringifyError(err) }`
-            }).flush();
+        const stringifiedError = stringifyError(err);
+        if (stringifiedError.indexOf('permission_denied') !== -1) {
+            getLogger()
+                .info('firebase_connection_reinitialized', { sessionUID })
+                .track({
+                    [FPTI_KEY.STATE]:           FPTI_STATE.BUTTON,
+                    [FPTI_KEY.TRANSITION]:      FPTI_TRANSITION.NATIVE_APP_SWITCH_ACK,
+                    [FPTI_CUSTOM_KEY.ERR_DESC]: `[Native Socket Info] ${ stringifiedError }`
+                }).flush();
+        } else {
+            getLogger().error('native_socket_error', { err: stringifiedError })
+                .track({
+                    [FPTI_KEY.STATE]:           FPTI_STATE.BUTTON,
+                    [FPTI_KEY.TRANSITION]:      FPTI_TRANSITION.NATIVE_APP_SWITCH_ACK,
+                    [FPTI_CUSTOM_KEY.ERR_DESC]: `[Native Socket Error] ${ stringifiedError }`
+                }).flush();
+        }
     });
 
     return nativeSocket;
 });
 
-function isIOSSafari() : boolean {
-    return isIos() && isSafari();
-}
-
-function isAndroidChrome() : boolean {
-    return isAndroid() && isChrome();
-}
-
 function useDirectAppSwitch() : boolean {
+    if (window.xprops.forceNativeDirectAppSwitch) {
+        return true;
+    }
+
+    if (window.xprops.forceNativePopupAppSwitch) {
+        return false;
+    }
+
     return isAndroidChrome();
 }
 
@@ -195,14 +232,15 @@ function isNativePaymentEligible({ payment, props, serviceData } : IsPaymentElig
 
 function setupNative({ props, serviceData } : SetupOptions) : ZalgoPromise<void> {
     return ZalgoPromise.try(() => {
-        const { getPageUrl, clientID, onShippingChange, currency, platform, vault, buttonSessionID } = props;
+        const { getPageUrl, clientID, onShippingChange, currency, platform,
+            vault, buttonSessionID, enableFunding } = props;
         const { merchantID, buyerCountry, cookies } = serviceData;
 
         const shippingCallbackEnabled = Boolean(onShippingChange);
 
         return ZalgoPromise.all([
             getNativeEligibility({ vault, platform, shippingCallbackEnabled, merchantID: merchantID[0],
-                clientID, buyerCountry, currency, buttonSessionID, cookies
+                clientID, buyerCountry, currency, buttonSessionID, cookies, enableFunding
             }).then(result => {
                 nativeEligibility = result;
             }),
@@ -240,11 +278,15 @@ function instrumentNativeSDKProps(props : NativeSDKProps) {
 }
 
 function initNative({ props, components, config, payment, serviceData } : InitOptions) : PaymentFlowInstance {
-    const { createOrder, onApprove, onCancel, onError, commit,
-        buttonSessionID, env, stageHost, apiStageHost, onClick, onShippingChange } = props;
-    const { facilitatorAccessToken, sdkMeta } = serviceData;
+    const { createOrder, onApprove, onCancel, onError, commit, clientID, sessionID, sdkCorrelationID,
+        buttonSessionID, env, stageHost, apiStageHost, onClick, onShippingChange, vault, platform,
+        currency, stickinessID, enableFunding } = props;
+    let { facilitatorAccessToken, sdkMeta, buyerCountry, merchantID, cookies } = serviceData;
     const { fundingSource } = payment;
-    const { version, firebase: firebaseConfig } = config;
+    const { sdkVersion, firebase: firebaseConfig } = config;
+
+    const shippingCallbackEnabled = Boolean(onShippingChange);
+    sdkMeta = sdkMeta.replace(/[=]+$/, '');
 
     if (!firebaseConfig) {
         throw new Error(`Can not run native flow without firebase config`);
@@ -259,6 +301,12 @@ function initNative({ props, components, config, payment, serviceData } : InitOp
     let approved = false;
     let cancelled = false;
     let didFallback = false;
+
+    getLogger()
+        .info(`native_start_${ isIOSSafari() ? 'ios' : 'android' }_window_width_${ window.outerWidth }`)
+        .info(`native_start_${ isIOSSafari() ? 'ios' : 'android' }_window_height_${ window.outerHeight }`)
+        .info(`native_stickiness_id_${ isIOSSafari() ? 'ios' : 'android' }_${ getStickinessID() }`)
+        .flush();
 
     const close = memoize(() => {
         return clean.all();
@@ -280,9 +328,7 @@ function initNative({ props, components, config, payment, serviceData } : InitOp
             return 'https://www.sandbox.paypal.com';
         }
 
-        return (env === ENV.SANDBOX)
-            ? NATIVE_DOMAIN_SANDBOX
-            : NATIVE_DOMAIN;
+        return NATIVE_DOMAIN[env];
     });
 
     const getNativePopupDomain = memoize(() : string => {
@@ -290,42 +336,7 @@ function initNative({ props, components, config, payment, serviceData } : InitOp
             return 'https://history.paypal.com';
         }
 
-        return (env === ENV.SANDBOX)
-            ? NATIVE_POPUP_DOMAIN_SANDBOX
-            : NATIVE_POPUP_DOMAIN;
-    });
-
-    const getNativeUrlForAndroid = memoize(({ pageUrl = initialPageUrl, sessionUID } = {}) : string => {
-        return extendUrl(`${ getNativeDomain() }${ NATIVE_CHECKOUT_URI[fundingSource] }`, {
-            query: { sdkMeta, sessionUID, buttonSessionID, pageUrl }
-        });
-    });
-
-    const getNativeUrl = memoize(({ sessionUID, pageUrl = initialPageUrl, sdkProps } : {| sessionUID : string, pageUrl : string, sdkProps : NativeSDKProps |}) : string => {
-        return extendUrl(`${ getNativeDomain() }${ NATIVE_CHECKOUT_URI[fundingSource] }`, {
-            query: {
-                sdkMeta,
-                sessionUID,
-                orderID:        sdkProps ? sdkProps.orderID : '',
-                facilitatorAccessToken,
-                pageUrl,
-                commit:         String(commit),
-                webCheckoutUrl: sdkProps ? sdkProps.webCheckoutUrl : '',
-                userAgent:      sdkProps ? sdkProps.userAgent : '',
-                buttonSessionID,
-                env,
-                stageHost:      stageHost || '',
-                apiStageHost:   apiStageHost || '',
-                forceEligible:  String(sdkProps ? sdkProps.forceEligible : 'false')
-            }
-        });
-    });
-
-    const getNativePopupUrl = memoize(({ sessionUID }) : string => {
-        const parentDomain = getDomain();
-        return extendUrl(`${ getNativePopupDomain() }${ NATIVE_CHECKOUT_POPUP_URI[fundingSource] }`, {
-            query: { sdkMeta, sessionUID, buttonSessionID, parentDomain }
-        });
+        return NATIVE_POPUP_DOMAIN[env];
     });
 
     const getWebCheckoutUrl = memoize(({ orderID }) : string => {
@@ -337,6 +348,67 @@ function initNative({ props, components, config, payment, serviceData } : InitOp
                 useraction:    commit ? USER_ACTION.COMMIT : USER_ACTION.CONTINUE,
                 native_xo:     '1'
             }
+        });
+    });
+
+    const getDirectNativeUrl = memoize(({ pageUrl = initialPageUrl, sessionUID } = {}) : string => {
+        return extendUrl(`${ getNativeDomain() }${ NATIVE_CHECKOUT_URI[fundingSource] }`, {
+            query: {
+                sdkMeta, fundingSource, sessionUID, buttonSessionID, pageUrl,
+                stickinessID:   (env !== ENV.PRODUCTION) ? stickinessID : '',
+                enableFunding: enableFunding.join(',')
+            }
+        });
+    });
+
+    const getDelayedNativeUrlQueryParams = ({ sessionUID, pageUrl = initialPageUrl, orderID } : {| sessionUID : string, pageUrl : string, orderID : string |}) => {
+        const webCheckoutUrl = getWebCheckoutUrl({ orderID });
+        const userAgent = getUserAgent();
+        const forceEligible = isNativeOptedIn({ props });
+
+        return {
+            sdkMeta,
+            sessionUID,
+            orderID,
+            facilitatorAccessToken,
+            pageUrl,
+            commit:         String(commit),
+            webCheckoutUrl: isIOSSafari() ? webCheckoutUrl : '',
+            stickinessID:   (env !== ENV.PRODUCTION) ? stickinessID : '',
+            userAgent,
+            buttonSessionID,
+            env,
+            stageHost:      stageHost || '',
+            apiStageHost:   apiStageHost || '',
+            forceEligible,
+            fundingSource,
+            enableFunding:  enableFunding.join(',')
+        };
+    };
+
+    const getDelayedNativeUrl = memoize(({ sessionUID, pageUrl = initialPageUrl, orderID } : {| sessionUID : string, pageUrl : string, orderID : string |}) : string => {
+        return extendUrl(`${ getNativeDomain() }${ NATIVE_CHECKOUT_URI[fundingSource] }`, {
+            query: getDelayedNativeUrlQueryParams({ sessionUID, pageUrl, orderID })
+        });
+    });
+
+    const getDelayedNativeFallbackUrl = memoize(({ sessionUID, pageUrl = initialPageUrl, orderID } : {| sessionUID : string, pageUrl : string, orderID : string |}) : string => {
+        return extendUrl(`${ getNativeDomain() }${ NATIVE_CHECKOUT_FALLBACK_URI[fundingSource] }`, {
+            query: getDelayedNativeUrlQueryParams({ sessionUID, pageUrl, orderID })
+        });
+    });
+
+    const getNativePopupParams = () : NativePopupInputParams => {
+        const parentDomain = getDomain();
+        return {
+            sdkMeta, buttonSessionID, parentDomain, env, clientID, sessionID, sdkCorrelationID
+        };
+    };
+
+    const getNativePopupUrl = memoize(() : string => {
+        return extendUrl(`${ getNativePopupDomain() }${ NATIVE_CHECKOUT_POPUP_URI[fundingSource] }`, {
+            // $FlowFixMe
+            query: getNativePopupParams()
         });
     });
 
@@ -358,21 +430,32 @@ function initNative({ props, components, config, payment, serviceData } : InitOp
         approved = true;
         getLogger().info(`native_message_onapprove`, { payerID, paymentID, billingToken })
             .track({
-                [FPTI_KEY.TRANSITION]: FPTI_TRANSITION.NATIVE_POPUP_CLOSED
+                [FPTI_KEY.TRANSITION]:      FPTI_TRANSITION.NATIVE_ON_APPROVE,
+                [FPTI_CUSTOM_KEY.INFO_MSG]: `payerID: ${ payerID }, paymentID: ${ paymentID }, billingToken: ${ billingToken }`
             })
+            .flush();
+
+        getLogger()
+            .info(`native_approve_${ isIOSSafari() ? 'ios' : 'android' }_window_width_${ window.outerWidth }`)
+            .info(`native_approve_${ isIOSSafari() ? 'ios' : 'android' }_window_height_${ window.outerHeight }`)
             .flush();
 
         const data = { payerID, paymentID, billingToken, forceRestAPI: true };
         const actions = { restart: () => fallbackToWebCheckout() };
         return ZalgoPromise.all([
-            onApprove(data, actions),
+            onApprove(data, actions)
+                .catch(err => onError(err)),
             close()
         ]).then(noop);
     };
 
     const onCancelCallback = () => {
         cancelled = true;
-        getLogger().info(`native_message_oncancel`).flush();
+        getLogger().info(`native_message_oncancel`)
+            .track({
+                [FPTI_KEY.TRANSITION]: FPTI_TRANSITION.NATIVE_ON_CANCEL
+            })
+            .flush();
         return ZalgoPromise.all([
             onCancel(),
             close()
@@ -380,7 +463,11 @@ function initNative({ props, components, config, payment, serviceData } : InitOp
     };
 
     const onErrorCallback = ({ data : { message } } : {| data : {| message : string |} |}) => {
-        getLogger().info(`native_message_onerror`, { err: message }).flush();
+        getLogger().info(`native_message_onerror`, { err: message })
+            .track({
+                [FPTI_KEY.TRANSITION]:      FPTI_TRANSITION.NATIVE_ON_ERROR,
+                [FPTI_CUSTOM_KEY.INFO_MSG]: `Error message: ${ message }`
+            }).flush();
         return ZalgoPromise.all([
             onError(new Error(message)),
             close()
@@ -388,7 +475,10 @@ function initNative({ props, components, config, payment, serviceData } : InitOp
     };
 
     const onShippingChangeCallback = ({ data } : {| data : OnShippingChangeData |}) => {
-        getLogger().info(`native_message_onshippingchange`).flush();
+        getLogger().info(`native_message_onshippingchange`)
+            .track({
+                [FPTI_KEY.TRANSITION]: FPTI_TRANSITION.NATIVE_ON_SHIPPING_CHANGE
+            }).flush();
         if (onShippingChange) {
             let resolved = true;
             const actions = {
@@ -413,10 +503,10 @@ function initNative({ props, components, config, payment, serviceData } : InitOp
 
     const connectNative = memoize(({ sessionUID } : {| sessionUID : string |}) : NativeConnection => {
         const socket = getNativeSocket({
-            sessionUID, firebaseConfig, version
+            sessionUID, firebaseConfig, version: sdkVersion
         });
 
-        const setNativeProps = memoize(() => {
+        const setNativeProps = () => {
             return getSDKProps().then(sdkProps => {
                 getLogger().info(`native_message_setprops`).flush();
                 instrumentNativeSDKProps(sdkProps);
@@ -429,10 +519,10 @@ function initNative({ props, components, config, payment, serviceData } : InitOp
             }).catch(err => {
                 getLogger().info(`native_response_setprops_error`).track({
                     [FPTI_KEY.STATE]:           FPTI_STATE.BUTTON,
-                    [FTPI_CUSTOM_KEY.ERR_DESC]: stringifyError(err)
+                    [FPTI_CUSTOM_KEY.ERR_DESC]: stringifyError(err)
                 }).flush();
             });
-        });
+        };
 
         const closeNative = memoize(() => {
             getLogger().info(`native_message_close`).flush();
@@ -467,6 +557,33 @@ function initNative({ props, components, config, payment, serviceData } : InitOp
     });
 
     const detectAppSwitch = once(({ sessionUID } : {| sessionUID : string |}) => {
+        getStorageState(state => {
+            const { lastAppSwitchTime = 0, lastWebSwitchTime = 0 } = state;
+
+            if (lastAppSwitchTime > lastWebSwitchTime) {
+                getLogger().info('app_switch_detect_with_previous_app_switch', {
+                    lastAppSwitchTime: lastAppSwitchTime.toString(),
+                    lastWebSwitchTime: lastWebSwitchTime.toString()
+                });
+            }
+
+            if (lastWebSwitchTime > lastAppSwitchTime) {
+                getLogger().info('app_switch_detect_with_previous_web_switch', {
+                    lastAppSwitchTime: lastAppSwitchTime.toString(),
+                    lastWebSwitchTime: lastWebSwitchTime.toString()
+                });
+            }
+
+            if (!lastAppSwitchTime && !lastWebSwitchTime) {
+                getLogger().info('app_switch_detect_with_no_previous_switch', {
+                    lastAppSwitchTime: lastAppSwitchTime.toString(),
+                    lastWebSwitchTime: lastWebSwitchTime.toString()
+                });
+            }
+
+            state.lastAppSwitchTime = Date.now();
+        });
+
         getLogger().info(`native_detect_app_switch`).track({
             [FPTI_KEY.TRANSITION]:      FPTI_TRANSITION.NATIVE_DETECT_APP_SWITCH
         }).flush();
@@ -475,6 +592,33 @@ function initNative({ props, components, config, payment, serviceData } : InitOp
     });
 
     const detectWebSwitch = once((fallbackWin : ?CrossDomainWindowType) => {
+        getStorageState(state => {
+            const { lastAppSwitchTime = 0, lastWebSwitchTime = 0 } = state;
+
+            if (lastAppSwitchTime > lastWebSwitchTime) {
+                getLogger().info('web_switch_detect_with_previous_app_switch', {
+                    lastAppSwitchTime: lastAppSwitchTime.toString(),
+                    lastWebSwitchTime: lastWebSwitchTime.toString()
+                });
+            }
+
+            if (lastWebSwitchTime > lastAppSwitchTime) {
+                getLogger().info('web_switch_detect_with_previous_web_switch', {
+                    lastAppSwitchTime: lastAppSwitchTime.toString(),
+                    lastWebSwitchTime: lastWebSwitchTime.toString()
+                });
+            }
+
+            if (!lastAppSwitchTime && !lastWebSwitchTime) {
+                getLogger().info('web_switch_detect_with_no_previous_switch', {
+                    lastAppSwitchTime: lastAppSwitchTime.toString(),
+                    lastWebSwitchTime: lastWebSwitchTime.toString()
+                });
+            }
+
+            state.lastWebSwitchTime = Date.now();
+        });
+
         getLogger().info(`native_detect_web_switch`).track({
             [FPTI_KEY.TRANSITION]: FPTI_TRANSITION.NATIVE_DETECT_WEB_SWITCH
         }).flush();
@@ -500,15 +644,18 @@ function initNative({ props, components, config, payment, serviceData } : InitOp
     });
 
     const initDirectAppSwitch = ({ sessionUID } : {| sessionUID : string |}) => {
-        const nativeUrl = getNativeUrlForAndroid({ sessionUID });
-
+        const nativeUrl = getDirectNativeUrl({ sessionUID });
         const nativeWin = popup(nativeUrl);
 
         const closePopup = () => {
+            getLogger().info(`native_closing_popup`).track({
+                [FPTI_KEY.STATE]:       FPTI_STATE.BUTTON,
+                [FPTI_KEY.TRANSITION]:  FPTI_TRANSITION.NATIVE_CLOSING_POPUP
+            }).flush();
             nativeWin.close();
         };
         window.addEventListener('pagehide', closePopup);
-        
+
         getLogger()
             .info(`native_attempt_appswitch_popup_shown`, { url: nativeUrl })
             .info(`native_attempt_appswitch_url_popup`, { url: nativeUrl })
@@ -524,8 +671,14 @@ function initNative({ props, components, config, payment, serviceData } : InitOp
         const validatePromise = validate();
         const delayPromise = ZalgoPromise.delay(500);
 
+        connectNative({ sessionUID });
+
         return validatePromise.then(valid => {
             if (!valid) {
+                getLogger().info(`native_onclick_invalid`).track({
+                    [FPTI_KEY.STATE]:       FPTI_STATE.BUTTON,
+                    [FPTI_KEY.TRANSITION]:  FPTI_TRANSITION.NATIVE_ON_CLICK_INVALID
+                }).flush();
                 return delayPromise.then(() => {
                     if (didAppSwitch(nativeWin)) {
                         return connectNative({ sessionUID }).close();
@@ -548,7 +701,7 @@ function initNative({ props, components, config, payment, serviceData } : InitOp
                     .track({
                         [FPTI_KEY.STATE]:           FPTI_STATE.BUTTON,
                         [FPTI_KEY.TRANSITION]:      FPTI_TRANSITION.NATIVE_ATTEMPT_APP_SWITCH_ERRORED,
-                        [FTPI_CUSTOM_KEY.ERR_DESC]: stringifyError(err)
+                        [FPTI_CUSTOM_KEY.ERR_DESC]: stringifyError(err)
                     }).flush();
                 return connectNative({ sessionUID }).close().then(() => {
                     throw err;
@@ -558,9 +711,14 @@ function initNative({ props, components, config, payment, serviceData } : InitOp
     };
 
     const initPopupAppSwitch = ({ sessionUID } : {| sessionUID : string |}) => {
-        const popupWin = popup(getNativePopupUrl({ sessionUID }));
-        
+        let redirected = false;
+        const popupWin = popup(getNativePopupUrl());
+
         const closePopup = () => {
+            getLogger().info(`native_closing_popup`).track({
+                [FPTI_KEY.STATE]:       FPTI_STATE.BUTTON,
+                [FPTI_KEY.TRANSITION]:  FPTI_TRANSITION.NATIVE_CLOSING_POPUP
+            }).flush();
             popupWin.close();
         };
         window.addEventListener('pagehide', closePopup);
@@ -572,8 +730,12 @@ function initNative({ props, components, config, payment, serviceData } : InitOp
             }).flush();
 
         const closeListener = onCloseWindow(popupWin, () => {
+            getLogger().info(`native_popup_closed`).track({
+                [FPTI_KEY.STATE]:       FPTI_STATE.BUTTON,
+                [FPTI_KEY.TRANSITION]:  FPTI_TRANSITION.NATIVE_POPUP_CLOSED
+            }).flush();
             return ZalgoPromise.delay(1000).then(() => {
-                if (!approved && !cancelled && !didFallback) {
+                if (!approved && !cancelled && !didFallback && !isAndroidChrome()) {
                     return ZalgoPromise.all([
                         onCancel(),
                         close()
@@ -586,39 +748,95 @@ function initNative({ props, components, config, payment, serviceData } : InitOp
             closeListener.cancel();
         });
 
-        const validatePromise = validate();
+        const validatePromise = validate().then(valid => {
+            if (!valid) {
+                getLogger().info(`native_onclick_invalid`).track({
+                    [FPTI_KEY.STATE]:       FPTI_STATE.BUTTON,
+                    [FPTI_KEY.TRANSITION]:  FPTI_TRANSITION.NATIVE_ON_CLICK_INVALID
+                }).flush();
+            }
+
+            return valid;
+        });
+
+        const eligibilityPromise = validatePromise.then(valid => {
+            if (!valid) {
+                return false;
+            }
+
+            if (isNativeOptedIn({ props })) {
+                return true;
+            }
+
+            return createOrder().then(orderID => {
+                return getNativeEligibility({ vault, platform, shippingCallbackEnabled, merchantID: merchantID[0],
+                    clientID, buyerCountry, currency, buttonSessionID, cookies, orderID, enableFunding
+                }).then(eligibility => {
+                    if (!eligibility || !eligibility[fundingSource] || !eligibility[fundingSource].eligibility) {
+                        getLogger().info(`native_appswitch_ineligible`, { orderID })
+                            .track({
+                                [FPTI_KEY.STATE]:           FPTI_STATE.BUTTON,
+                                [FPTI_KEY.TRANSITION]:      FPTI_TRANSITION.NATIVE_APP_SWITCH_INELIGIBLE
+                            }).flush();
+
+                        return false;
+                    }
+
+                    return true;
+                });
+            });
+        });
 
         const awaitRedirectListener = listen(popupWin, getNativePopupDomain(), POST_MESSAGE.AWAIT_REDIRECT, ({ data: { pageUrl } }) => {
             getLogger().info(`native_post_message_await_redirect`).flush();
-            return validatePromise.then(valid => {
+
+            return ZalgoPromise.hash({
+                valid:    validatePromise,
+                eligible: eligibilityPromise
+            }).then(({ valid, eligible }) => {
+
                 if (!valid) {
                     return close().then(() => {
-                        throw new Error(`Validation failed`);
+                        return { redirect: false };
                     });
                 }
 
-                return getSDKProps().then(sdkProps => {
-                    const nativeUrl = getNativeUrl({ sessionUID, pageUrl, sdkProps });
+                if (!eligible) {
+                    return createOrder().then(orderID => {
+                        const fallbackUrl = getDelayedNativeFallbackUrl({ sessionUID, pageUrl, orderID });
+                        return { redirect: true, redirectUrl: fallbackUrl };
+                    });
+                }
+
+                return createOrder().then(orderID => {
+                    const nativeUrl = getDelayedNativeUrl({ sessionUID, pageUrl, orderID });
 
                     getLogger().info(`native_attempt_appswitch_url_popup`, { url: nativeUrl })
                         .track({
                             [FPTI_KEY.STATE]:           FPTI_STATE.BUTTON,
                             [FPTI_KEY.TRANSITION]:      FPTI_TRANSITION.NATIVE_ATTEMPT_APP_SWITCH,
-                            [FTPI_CUSTOM_KEY.INFO_MSG]: nativeUrl
+                            [FPTI_CUSTOM_KEY.INFO_MSG]: nativeUrl
                         }).flush();
 
-                    return { redirectUrl: nativeUrl };
-                }).catch(err => {
-                    getLogger().info(`native_attempt_appswitch_url_popup_errored`)
-                        .track({
-                            [FPTI_KEY.STATE]:           FPTI_STATE.BUTTON,
-                            [FPTI_KEY.TRANSITION]:      FPTI_TRANSITION.NATIVE_ATTEMPT_APP_SWITCH_ERRORED,
-                            [FTPI_CUSTOM_KEY.ERR_DESC]: stringifyError(err)
-                        }).flush();
+                    redirected = true;
+                    return { redirect: true, redirectUrl: nativeUrl };
+                });
 
-                    return connectNative({ sessionUID }).close().then(() => {
-                        throw err;
-                    });
+            }).catch(err => {
+                getLogger().info(`native_attempt_appswitch_url_popup_errored`)
+                    .track({
+                        [FPTI_KEY.STATE]:           FPTI_STATE.BUTTON,
+                        [FPTI_KEY.TRANSITION]:      FPTI_TRANSITION.NATIVE_ATTEMPT_APP_SWITCH_ERRORED,
+                        [FPTI_CUSTOM_KEY.ERR_DESC]: stringifyError(err)
+                    }).flush();
+
+                return createOrder().then(orderID => {
+                    const fallbackUrl = getDelayedNativeFallbackUrl({ sessionUID, pageUrl, orderID });
+                    return { redirect: true, redirectUrl: fallbackUrl };
+                });
+            }).catch(err => {
+                return close().then(() => {
+                    return onError(err);
                 });
             });
         });
@@ -639,7 +857,11 @@ function initNative({ props, components, config, payment, serviceData } : InitOp
         });
 
         const onCompleteListener = listen(popupWin, getNativePopupDomain(), POST_MESSAGE.ON_COMPLETE, () => {
-            getLogger().info(`native_post_message_on_complete`).flush();
+            getLogger().info(`native_post_message_on_complete`)
+                .track({
+                    [FPTI_KEY.STATE]:           FPTI_STATE.BUTTON,
+                    [FPTI_KEY.TRANSITION]:      FPTI_TRANSITION.NATIVE_ON_COMPLETE
+                }).flush();
             popupWin.close();
         });
 
@@ -662,10 +884,12 @@ function initNative({ props, components, config, payment, serviceData } : InitOp
         clean.register(detectWebSwitchListener.cancel);
 
         return awaitRedirectListener.then(() => {
-            return promiseOne([
-                detectAppSwitchListener,
-                detectWebSwitchListener
-            ]);
+            if (redirected) {
+                return promiseOne([
+                    detectAppSwitchListener,
+                    detectWebSwitchListener
+                ]);
+            }
         });
     };
 

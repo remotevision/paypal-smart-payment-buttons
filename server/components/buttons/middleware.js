@@ -5,7 +5,7 @@ import { COUNTRY, LANG } from '@paypal/sdk-constants';
 import { stringifyError, noop } from 'belter';
 
 import { clientErrorResponse, htmlResponse, allowFrame, defaultLogger, safeJSON, sdkMiddleware, type ExpressMiddleware,
-    graphQLBatch, type GraphQL, javascriptResponse, emptyResponse, promiseTimeout, isLocal } from '../../lib';
+    graphQLBatch, type GraphQL, javascriptResponse, emptyResponse, promiseTimeout, isLocalOrTest } from '../../lib';
 import { renderFraudnetScript, shouldRenderFraudnet, resolveFundingEligibility, resolveMerchantID, resolveWallet } from '../../service';
 import { EXPERIMENT_TIMEOUT } from '../../config';
 import type { LoggerType, CacheType, ExpressRequest, FirebaseConfig } from '../../types';
@@ -45,7 +45,7 @@ type ButtonMiddlewareOptions = {|
 |};
 
 export function getButtonMiddleware({
-    logger = defaultLogger, content: smartContent, graphQL, getAccessToken, cdn = !isLocal(),
+    logger = defaultLogger, content: smartContent, graphQL, getAccessToken, cdn = !isLocalOrTest(),
     getMerchantID, cache, getInlineGuestExperiment = () => Promise.resolve(false), firebaseConfig, tracking
 } : ButtonMiddlewareOptions = {}) : ExpressMiddleware {
     const useLocal = !cdn;
@@ -58,7 +58,7 @@ export function getButtonMiddleware({
 
             const { env, clientID, buttonSessionID, cspNonce, debug, buyerCountry, disableFunding, disableCard, userIDToken, amount,
                 merchantID: sdkMerchantID, currency, intent, commit, vault, clientAccessToken, basicFundingEligibility, locale,
-                clientMetadataID, pageSessionID, correlationID, cookies, enableFunding } = getButtonParams(params, req, res);
+                clientMetadataID, pageSessionID, correlationID, cookies, enableFunding, paymentMethodNonce } = getButtonParams(params, req, res);
             
             logger.info(req, `button_params`, { params: JSON.stringify(params) });
 
@@ -88,7 +88,7 @@ export function getButtonMiddleware({
 
             const walletPromise = resolveWallet(req, gqlBatch, {
                 logger, clientID, merchantID: sdkMerchantID, buttonSessionID, currency, intent, commit, vault, amount,
-                disableFunding, disableCard, clientAccessToken, buyerCountry, userIDToken
+                disableFunding, disableCard, clientAccessToken, buyerCountry, userIDToken, paymentMethodNonce
             }).catch(noop);
 
             gqlBatch.flush();
@@ -146,7 +146,6 @@ export function getButtonMiddleware({
                     <style nonce="${ cspNonce }">${ buttonStyle }</style>
                     
                     <div id="buttons-container" class="buttons-container">${ buttonHTML }</div>
-                    <div id="card-fields-container" class="card-fields-container"></div>
 
                     ${ meta.getSDKLoader({ nonce: cspNonce }) }
                     <script nonce="${ cspNonce }">${ client.script }</script>

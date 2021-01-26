@@ -175,3 +175,10 @@ export type SmartFields = {|
     confirm : (orderId : string) => ZalgoPromise<void | string>,
     isValid : () => boolean
 |};
+
+export type ExportCallbacks = {|
+    createOrder : () => ZalgoPromise<string>,
+    onApprove : () => ZalgoPromise<void> | void,
+    onCancel : () => ZalgoPromise<void> | void,
+    onError : (mixed) => ZalgoPromise<void> | void
+|};

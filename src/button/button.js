@@ -17,6 +17,7 @@ import { setupRemember } from './remember';
 import { setupPaymentFlows, initiatePaymentFlow, initiateMenuFlow } from './pay';
 import { prerenderButtonSmartMenu, clearButtonSmartMenu } from './menu';
 import { validateProps } from './validation';
+import { setupExports } from './exports';
 
 type ButtonOpts = {|
     fundingEligibility : FundingEligibilityType,
@@ -69,10 +70,10 @@ export function setupButton(opts : ButtonOpts) : ZalgoPromise<void> {
     const props = getProps({ facilitatorAccessToken });
     const { env, sessionID, partnerAttributionID, commit, sdkCorrelationID, locale,
         buttonSessionID, merchantDomain, onInit, getPrerenderDetails, rememberFunding, getQueriedEligibleFunding,
-        style, fundingSource, intent, createBillingAgreement, createSubscription } = props;
+        style, fundingSource, intent, createBillingAgreement, createSubscription, stickinessID } = props;
         
     const config = getConfig({ serverCSPNonce, firebaseConfig });
-    const { version } = config;
+    const { sdkVersion } = config;
     
     const components = getComponents();
 
@@ -219,15 +220,18 @@ export function setupButton(opts : ButtonOpts) : ZalgoPromise<void> {
     });
 
     const setupRememberTask = setupRemember({ rememberFunding, fundingEligibility });
+
     const setupButtonLogsTask = setupButtonLogger({
-        style, env, version, sessionID, clientID, partnerAttributionID, commit, sdkCorrelationID,
+        style, env, sdkVersion, sessionID, clientID, partnerAttributionID, commit, sdkCorrelationID, stickinessID,
         buttonCorrelationID, locale, merchantID, buttonSessionID, merchantDomain, fundingSource, getQueriedEligibleFunding });
     const setupPaymentFlowsTask = setupPaymentFlows({ props, config, serviceData, components });
+    const setupExportsTask = setupExports({ props, isEnabled });
+
     const validatePropsTask = setupButtonLogsTask.then(() => validateProps({ env, clientID, intent, createBillingAgreement, createSubscription }));
 
     return ZalgoPromise.hash({
         initPromise, facilitatorAccessToken,
         setupButtonLogsTask, setupPrerenderTask, setupRememberTask,
-        setupPaymentFlowsTask, validatePropsTask
+        setupPaymentFlowsTask, validatePropsTask, setupExportsTask
     }).then(noop);
 }
