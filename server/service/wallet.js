@@ -146,7 +146,7 @@ function buildSmartWalletQuery() : string {
         $vetted:           'Boolean',
 
         $paymentMethodNonce: 'String',
-        $branded:             'Boolean'
+        $branded:            'Boolean'
     };
 
     const Inputs = {
@@ -161,8 +161,8 @@ function buildSmartWalletQuery() : string {
 
         vetted:           '$vetted',
 
-        paymentMethodNonce: '$paymentMethodNonce',
-        branded:             '$branded'
+        nonce:            '$paymentMethodNonce',
+        branded:          '$branded'
     };
 
     const getSmartWalletInstrumentQuery = () => {
@@ -173,7 +173,8 @@ function buildSmartWalletQuery() : string {
             instrumentID: types.string,
             tokenID:      types.string,
             vendor:       types.string,
-            oneClick:     types.boolean
+            oneClick:     types.boolean,
+            branded:      types.boolean
         };
     };
 
@@ -222,6 +223,10 @@ export async function resolveWallet(req : ExpressRequest, gqlBatch : GraphQLBatc
     currency, intent, commit, vault, disableFunding, disableCard, clientAccessToken, buyerCountry, buyerAccessToken, amount = DEFAULT_AMOUNT,
     userIDToken, userRefreshToken, paymentMethodNonce, branded } : WalletOptions) : Promise<Wallet> {
 
+        console.log('!!!!!! nonce', paymentMethodNonce);
+        console.log('!!!!!! branded', branded);
+
+
     const wallet : Wallet = {
         paypal: {
             instruments: []
@@ -235,7 +240,7 @@ export async function resolveWallet(req : ExpressRequest, gqlBatch : GraphQLBatc
     };
 
 
-    if (userIDToken || userRefreshToken || buyerAccessToken) {
+    if (userIDToken || userRefreshToken || buyerAccessToken || paymentMethodNonce) {
         try {
             const result = await gqlBatch({
                 query:     buildSmartWalletQuery(),
@@ -252,6 +257,7 @@ export async function resolveWallet(req : ExpressRequest, gqlBatch : GraphQLBatc
                 throw new Error(`No smart wallet returned`);
             }
 
+            console.log('@@@@@ smart wallet', JSON.stringify(result.smartWallet));
             return result.smartWallet;
         } catch (err) {
             logger.error(req, 'smart_wallet_error_fallback', { err: err.stack ? err.stack : err.toString() });
