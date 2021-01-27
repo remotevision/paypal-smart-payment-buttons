@@ -206,6 +206,7 @@ function getPaymentMethodNonce(req : ExpressRequest) : string {
 
 // $FlowFixMe
 function getBranded(params : ExpressRequest) : ?boolean {
+    // $FlowFixMe
     const branded = params.branded;
 
     if (typeof branded !== 'boolean') {
@@ -309,6 +310,8 @@ export function getButtonParams(params : ButtonInputParams, req : ExpressRequest
 
     const basicFundingEligibility = getFundingEligibilityParam(req);
     const paymentMethodNonce = getPaymentMethodNonce(req);
+
+    // $FlowFixMe
     const branded = getBranded(params);
     const riskData = getRiskDataParam(req);
     const correlationID = req.correlationId || '';
