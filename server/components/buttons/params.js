@@ -79,7 +79,7 @@ type ButtonParams = {|
     platform : $Values<typeof PLATFORM>,
     cookies : string,
     paymentMethodNonce : string,
-    branded : boolean
+    branded : ?boolean
 |};
 
 function getCookieString(req : ExpressRequest) : string {
@@ -204,12 +204,11 @@ function getPaymentMethodNonce(req : ExpressRequest) : string {
 }
 
 
-function getBranded(req : ExpressRequest) : boolean {
-    let branded = req.query && req.query.branded;
+function getBranded(req : ExpressRequest) : ?boolean {
+    const branded = req.query && req.query.branded;
 
-    // default to branded payments
-    if (!branded || typeof branded !== 'boolean') {
-        branded = true;
+    if (typeof branded !== 'boolean') {
+        return;
     }
 
     return branded;
