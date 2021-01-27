@@ -18,6 +18,9 @@ function isNonceEligible({ props }) : boolean {
 
     const { wallet } = props;
 
+    // eslint-disable-next-line no-console
+    console.log('wallet', wallet);
+
     if (!wallet) {
         return false;
     }
@@ -40,9 +43,7 @@ function isNoncePaymentEligible({ props, payment }) : boolean {
     // TODO: check if we need to loop between instruments or if we can just pick the first instrument
     const { tokenID } = wallet.card.instruments[0];
 
-    // eslint-disable-next-line no-warning-comments
-    // TODO: check with Daniel if this needs to be paypal or card?
-    if (fundingSource !== FUNDING.PAYPAL) {
+    if (fundingSource !== FUNDING.CARD) {
         return false;
     }
     if (!branded) {
