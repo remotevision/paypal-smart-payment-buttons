@@ -204,8 +204,8 @@ function getPaymentMethodNonce(req : ExpressRequest) : string {
 }
 
 
-function getBranded(req : ExpressRequest) : ?boolean {
-    const branded = req.query && req.query.branded;
+function getBranded(params : ExpressRequest) : ?boolean {
+    const branded = params.branded;
 
     if (typeof branded !== 'boolean') {
         return;
@@ -307,7 +307,7 @@ export function getButtonParams(params : ButtonInputParams, req : ExpressRequest
 
     const basicFundingEligibility = getFundingEligibilityParam(req);
     const paymentMethodNonce = getPaymentMethodNonce(req);
-    const branded = getBranded(req);
+    const branded = getBranded(params);
     const riskData = getRiskDataParam(req);
     const correlationID = req.correlationId || '';
 
