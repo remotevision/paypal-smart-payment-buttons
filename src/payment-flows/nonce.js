@@ -11,12 +11,12 @@ function setupNonce() {
 // pass
 }
 
-function isNonceEligible({ props }) : boolean {
+function isNonceEligible({ props, serviceData }) : boolean {
     const { paymentMethodNonce } = props;
     // eslint-disable-next-line no-console
     console.log('nonce eligibility check', paymentMethodNonce);
 
-    const { wallet } = props;
+    const { wallet } = serviceData;
 
     // eslint-disable-next-line no-console
     console.log('wallet', wallet);
@@ -30,14 +30,17 @@ function isNonceEligible({ props }) : boolean {
     }
 
     return true;
-
-
 }
 
+function isNoncePaymentEligible({ props, payment, serviceData }) : boolean {
 
-function isNoncePaymentEligible({ props, payment }) : boolean {
-    const { wallet, branded } = props;
+    const { branded } = props;
+    const { wallet } = serviceData;
+
     const { fundingSource } = payment;
+
+    // eslint-disable-next-line no-console
+    console.log('nonce payment eligibility check', branded, wallet, fundingSource);
 
     // eslint-disable-next-line no-warning-comments
     // TODO: check if we need to loop between instruments or if we can just pick the first instrument
@@ -53,7 +56,6 @@ function isNoncePaymentEligible({ props, payment }) : boolean {
     if (!tokenID) {
         return false;
     }
-
 
     return true;
 }
@@ -85,7 +87,6 @@ function initNonce({ props }) : PaymentFlowInstance {
         start,
         close: promiseNoop
     };
-
 }
 
 
