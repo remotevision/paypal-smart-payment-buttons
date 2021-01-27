@@ -204,7 +204,7 @@ function getPaymentMethodNonce(req : ExpressRequest) : string {
     return nonce;
 }
 
-
+// $FlowFixMe
 function getBranded(params : ExpressRequest) : ?boolean {
     const branded = params.branded;
 
@@ -278,6 +278,7 @@ function getStyle(params : ButtonInputParams) : Style {
     return { label, period };
 }
 
+// $FlowFixMe
 export function getButtonParams(params : ButtonInputParams, req : ExpressRequest, res : ExpressResponse) : ButtonParams {
     const {
         env,
