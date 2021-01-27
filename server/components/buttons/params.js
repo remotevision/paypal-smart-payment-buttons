@@ -204,7 +204,7 @@ function getPaymentMethodNonce(req : ExpressRequest) : string {
 }
 
 
-function getBranded(params : ExpressRequest) : ?boolean {
+function getBranded(params : ButtonInputParams) : ?boolean {
     const branded = params.branded;
 
     if (typeof branded !== 'boolean') {
