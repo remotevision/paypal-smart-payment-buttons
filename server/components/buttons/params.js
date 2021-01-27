@@ -79,7 +79,7 @@ type ButtonParams = {|
     platform : $Values<typeof PLATFORM>,
     cookies : string,
     paymentMethodNonce : string,
-    branded : boolean
+    branded : ?boolean
 |};
 
 function getCookieString(req : ExpressRequest) : string {
@@ -205,12 +205,11 @@ function getPaymentMethodNonce(req : ExpressRequest) : string {
 }
 
 
-function getBranded(req : ExpressRequest) : boolean {
-    let branded = req.query && req.query.branded;
+function getBranded(params : ExpressRequest) : ?boolean {
+    const branded = params.branded;
 
-    // default to branded payments
-    if (!branded || typeof branded !== 'boolean') {
-        branded = true;
+    if (typeof branded !== 'boolean') {
+        return;
     }
 
     return branded;
@@ -309,7 +308,7 @@ export function getButtonParams(params : ButtonInputParams, req : ExpressRequest
 
     const basicFundingEligibility = getFundingEligibilityParam(req);
     const paymentMethodNonce = getPaymentMethodNonce(req);
-    const branded = getBranded(req);
+    const branded = getBranded(params);
     const riskData = getRiskDataParam(req);
     const correlationID = req.correlationId || '';
 
