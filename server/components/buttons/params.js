@@ -78,7 +78,7 @@ type ButtonParams = {|
     correlationID : string,
     platform : $Values<typeof PLATFORM>,
     cookies : string,
-    paymentMethodNonce : ?string,
+    paymentMethodNonce : string,
     branded : boolean
 |};
 
@@ -115,7 +115,7 @@ function getFundingEligibilityParam(req : ExpressRequest) : FundingEligibilityTy
             throw new makeError(ERROR_CODE.VALIDATION_ERROR, `Invalid funding eligibility: ${ encodedFundingEligibility }`, err);
         }
         const fundingEligibility = getDefaultFundingEligibility();
-        
+
         for (const fundingSource of values(FUNDING)) {
             const fundingSourceEligibilityInput = fundingEligibilityInput[fundingSource] || {};
             const fundingSourceEligibility = fundingEligibility[fundingSource] = {};
@@ -184,12 +184,35 @@ function getFundingEligibilityParam(req : ExpressRequest) : FundingEligibilityTy
 
         return fundingEligibility;
     }
-    
+
     return {
         [ FUNDING.PAYPAL ]: {
             eligible: true
         }
     };
+}
+
+
+function getPaymentMethodNonce(req : ExpressRequest) : string {
+    let nonce = req.query && req.query.paymentMethodNonce;
+
+    if (!nonce || typeof nonce !== 'string') {
+        return;
+    }
+
+    return nonce;
+}
+
+
+function getBranded(req : ExpressRequest) : boolean {
+    let branded = req.query && req.query.branded;
+
+    // default to branded payments
+    if (!branded || typeof branded !== 'boolean') {
+        branded = true;
+    }
+
+    return branded;
 }
 
 function getRiskDataParam(req : ExpressRequest) : ?RiskData {
@@ -274,9 +297,7 @@ export function getButtonParams(params : ButtonInputParams, req : ExpressRequest
         userIDToken,
         debug = false,
         onShippingChange = false,
-        platform = PLATFORM.DESKTOP,
-        paymentMethodNonce,
-        branded = true
+        platform = PLATFORM.DESKTOP
     } = params;
 
     const locale = getLocale(params);
@@ -286,6 +307,8 @@ export function getButtonParams(params : ButtonInputParams, req : ExpressRequest
     const buyerCountry = getBuyerCountry(req, params);
 
     const basicFundingEligibility = getFundingEligibilityParam(req);
+    const paymentMethodNonce = getPaymentMethodNonce(req);
+    const branded = getBranded(req);
     const riskData = getRiskDataParam(req);
     const correlationID = req.correlationId || '';
 

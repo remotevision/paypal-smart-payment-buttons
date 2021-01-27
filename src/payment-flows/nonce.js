@@ -12,7 +12,9 @@ function setupNonce() {
 }
 
 function isNonceEligible({ props }) : boolean {
-    console.log('nonce eligible');
+    let { paymentMethodNonce } = props;
+    console.log('nonce eligibility check', paymentMethodNonce);
+
     const { wallet } = props;
 
     if (!wallet) {
