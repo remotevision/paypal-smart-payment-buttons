@@ -4662,7 +4662,7 @@ window.spb = function(modules) {
                                             },
                                             headers: (_headers17 = {}, _headers17["paypal-client-context"] = orderID, _headers17)
                                         }).then((function(data) {
-                                            logger_getLogger().info("Data from paywithNonce", data);
+                                            logger_getLogger().info("pay_with_nonce_cart_id", data.cart.cartId);
                                         }));
                                     }({
                                         orderID: orderID,
