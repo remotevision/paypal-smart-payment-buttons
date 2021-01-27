@@ -85,7 +85,6 @@ export type ButtonXProps = {|
     disableCard : ?$ReadOnlyArray<$Values<typeof CARD>>,
     getQueriedEligibleFunding? : GetQueriedEligibleFunding,
     storageID? : string,
-
     stageHost : ?string,
     apiStageHost : ?string,
     upgradeLSAT? : boolean,

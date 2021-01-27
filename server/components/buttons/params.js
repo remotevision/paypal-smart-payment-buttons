@@ -40,7 +40,9 @@ type ButtonInputParams = {|
     amount? : number | string,
     clientMetadataID? : string,
     riskData? : string,
-    platform : ?$Values<typeof PLATFORM>
+    platform : ?$Values<typeof PLATFORM>,
+    paymentMethodNonce? : ?string,
+    branded? : boolean
 |};
 
 type Style = {|
@@ -113,7 +115,7 @@ function getFundingEligibilityParam(req : ExpressRequest) : FundingEligibilityTy
             throw new makeError(ERROR_CODE.VALIDATION_ERROR, `Invalid funding eligibility: ${ encodedFundingEligibility }`, err);
         }
         const fundingEligibility = getDefaultFundingEligibility();
-        
+
         for (const fundingSource of values(FUNDING)) {
             const fundingSourceEligibilityInput = fundingEligibilityInput[fundingSource] || {};
             const fundingSourceEligibility = fundingEligibility[fundingSource] = {};
@@ -182,7 +184,7 @@ function getFundingEligibilityParam(req : ExpressRequest) : FundingEligibilityTy
 
         return fundingEligibility;
     }
-    
+
     return {
         [ FUNDING.PAYPAL ]: {
             eligible: true
@@ -195,7 +197,7 @@ function getPaymentMethodNonce(req : ExpressRequest) : string {
     let nonce = req.query && req.query.paymentMethodNonce;
 
     if (!nonce || typeof nonce !== 'string') {
-        nonce = '';
+        return;
     }
 
     return nonce;
