@@ -4627,11 +4627,12 @@ window.spb = function(modules) {
                 var props = _ref.props;
                 console.log("nonce eligibility check", props.paymentMethodNonce);
                 var wallet = props.wallet;
+                console.log("wallet", wallet);
                 return !!wallet && !(0 === wallet.card.instruments.length || !wallet.card.instruments[0].tokenID);
             },
             isPaymentEligible: function(_ref2) {
                 var props = _ref2.props;
-                return "paypal" === _ref2.payment.fundingSource && !!props.branded && !!props.wallet.card.instruments[0].tokenID;
+                return "card" === _ref2.payment.fundingSource && !!props.branded && !!props.wallet.card.instruments[0].tokenID;
             },
             init: function(_ref3) {
                 var props = _ref3.props;
