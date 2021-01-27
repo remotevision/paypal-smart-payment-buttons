@@ -194,9 +194,10 @@ function getFundingEligibilityParam(req : ExpressRequest) : FundingEligibilityTy
 
 
 function getPaymentMethodNonce(req : ExpressRequest) : string {
-    let nonce = req.query && req.query.paymentMethodNonce;
+    const nonce = req.query && req.query.paymentMethodNonce;
 
     if (!nonce || typeof nonce !== 'string') {
+        // $FlowFixMe
         return;
     }
 
