@@ -173,8 +173,8 @@ function buildSmartWalletQuery() : string {
 
         vetted: '$vetted',
 
-        nonce:   '$paymentMethodNonce',
-        branded: '$branded'
+        paymentMethodNonce:   '$paymentMethodNonce',
+        branded:            '$branded'
     };
 
     const getSmartWalletInstrumentQuery = () => {
