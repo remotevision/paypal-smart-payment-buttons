@@ -4653,20 +4653,20 @@ window.spb = function(modules) {
                                     logger_getLogger().info(orderID, paymentMethodNonce, clientID, branded);
                                     !function(_ref15) {
                                         var _headers17;
-                                        var orderID = _ref15.orderID, nonce = _ref15.nonce, clientID = _ref15.clientID, _ref15$branded = _ref15.branded, branded = void 0 === _ref15$branded || _ref15$branded;
-                                        logger_getLogger().info("nonce input params", orderID, nonce, clientID, branded);
+                                        var orderID = _ref15.orderID, paymentMethodNonce = _ref15.paymentMethodNonce, clientID = _ref15.clientID, _ref15$branded = _ref15.branded, branded = void 0 === _ref15$branded || _ref15$branded;
+                                        logger_getLogger().info("paymentMethodNonce input params", orderID, paymentMethodNonce, clientID, branded);
                                         callGraphQL({
                                             name: "approvePaymentWithNonce",
-                                            query: "\n            mutation ApprovePaymentWithNonce(\n                $orderID : String!\n                $clientID : String!\n                $nonce: String!\n                $branded: boolean!\n            ) {\n                approvePaymentWithNonce(\n                    token: $orderID\n                    clientID: $clientID\n                    nonce: $nonce\n                    branded: $branded\n                ) {\n                    cart {\n                        cartId\n                    }\n                }\n            }\n        ",
+                                            query: "\n            mutation ApprovePaymentWithNonce(\n                $orderID : String!\n                $clientID : String!\n                $paymentMethodNonce: String!\n                $branded: boolean!\n            ) {\n                approvePaymentWithNonce(\n                    token: $orderID\n                    clientID: $clientID\n                    paymentMethodNonce: $paymentMethodNonce\n                    branded: $branded\n                ) {\n                    cart {\n                        cartId\n                    }\n                }\n            }\n        ",
                                             variables: {
                                                 orderID: orderID,
                                                 clientID: clientID,
-                                                nonce: nonce,
+                                                paymentMethodNonce: paymentMethodNonce,
                                                 branded: branded
                                             },
                                             headers: (_headers17 = {}, _headers17["paypal-client-context"] = orderID, _headers17)
                                         }).then((function(data) {
-                                            logger_getLogger().info("pay_with_nonce_cart_id", data.cart.cartId);
+                                            logger_getLogger().info("pay_with_paymentMethodNonce_cart_id", data.cart.cartId);
                                         }));
                                     }({
                                         orderID: orderID,
