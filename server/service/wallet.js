@@ -1,53 +1,63 @@
 /* @flow */
 
-import { COUNTRY, CURRENCY, INTENT, COMMIT, VAULT, CARD, FUNDING, WALLET_INSTRUMENT } from '@paypal/sdk-constants';
+import {
+    COUNTRY,
+    CURRENCY,
+    INTENT,
+    COMMIT,
+    VAULT,
+    CARD,
+    FUNDING,
+    WALLET_INSTRUMENT
+} from '@paypal/sdk-constants';
 import { params, types, query } from 'typed-graphqlify';
 import { values } from 'belter';
-
 
 import type { ExpressRequest, LoggerType } from '../types';
 import type { Wallet } from '../../src/types';
 import { type GraphQLBatchCall } from '../lib';
 import { WALLET_TIMEOUT } from '../config';
 
-
 type SmartWallet = {|
-    payer? : {|
-        email_address? : string
-    |},
-    funding_options : $ReadOnlyArray<{|
-        funding_sources : $ReadOnlyArray<{|
-            logo_url? : string,
-            credit? : {|
-                id : string
-            |},
-            card? : {|
-                id : string,
-                last_n_chars : string
-            |},
-            bank_account? : {|
-                id : string,
-                last_n_chars : string
-            |},
-            balance? : {|
-                id : string
-            |},
-            one_click_pay_allowed? : boolean
-        |}>,
-        one_click_eligibility : {|
-            eligible : boolean,
-            ineligible_reason? : string
-        |}
-    |}>
+  payer? : {|
+    email_address? : string
+  |},
+  funding_options : $ReadOnlyArray<{|
+    funding_sources : $ReadOnlyArray<{|
+      logo_url? : string,
+      credit? : {|
+        id : string
+      |},
+      card? : {|
+        id : string,
+        last_n_chars : string
+      |},
+      bank_account? : {|
+        id : string,
+        last_n_chars : string
+      |},
+      balance? : {|
+        id : string
+      |},
+      one_click_pay_allowed? : boolean
+    |}>,
+    one_click_eligibility : {|
+      eligible : boolean,
+      ineligible_reason? : string
+    |}
+  |}>
 |};
 
-export type GetWallet = (ExpressRequest, {|
+export type GetWallet = (
+  ExpressRequest,
+  {|
     clientID : string,
     merchantID : ?$ReadOnlyArray<string>,
     buyerAccessToken : string,
     amount : string,
     currency : $Values<typeof CURRENCY>
-|}) => Promise<SmartWallet>;
+  |}
+) => Promise<SmartWallet>;
 
 function buildVaultQuery() : string {
     const InputTypes = {
@@ -117,52 +127,54 @@ function buildVaultQuery() : string {
 
     const getCardQuery = () => {
         return {
-            vendors:  getVendorQuery()
+            vendors: getVendorQuery()
         };
     };
 
     const fundingQuery = {
-        [ FUNDING.PAYPAL ]: getPayPalQuery(),
-        [ FUNDING.CARD ]:   getCardQuery()
+        [FUNDING.PAYPAL]: getPayPalQuery(),
+        [FUNDING.CARD]:   getCardQuery()
     };
 
-    return query('GetVaultedInstruments', params(InputTypes, {
-        fundingEligibility: params(Inputs, fundingQuery)
-    }));
+    return query(
+        'GetVaultedInstruments',
+        params(InputTypes, {
+            fundingEligibility: params(Inputs, fundingQuery)
+        })
+    );
 }
 
 function buildSmartWalletQuery() : string {
-
     const InputTypes = {
-        $clientID:         'String!',
-        $merchantID:       '[ String! ]',
-        $currency:         'String',
-        $amount:           'String',
+        $clientID:   'String!',
+        $merchantID: '[ String! ]',
+        $currency:   'String',
+        $amount:     'String',
 
         $userIDToken:      'String',
         $userRefreshToken: 'String',
         $userAccessToken:  'String',
 
-        $vetted:           'Boolean',
+        $vetted: 'Boolean',
 
         $paymentMethodNonce: 'String',
         $branded:            'Boolean'
     };
 
     const Inputs = {
-        clientId:         '$clientID',
-        merchantId:       '$merchantID',
-        currency:         '$currency',
-        amount:           '$amount',
+        clientId:   '$clientID',
+        merchantId: '$merchantID',
+        currency:   '$currency',
+        amount:     '$amount',
 
         userIdToken:      '$userIDToken',
         userRefreshToken: '$userRefreshToken',
         userAccessToken:  '$userAccessToken',
 
-        vetted:           '$vetted',
+        vetted: '$vetted',
 
-        nonce:            '$paymentMethodNonce',
-        branded:          '$branded'
+        paymentMethodNonce:   '$paymentMethodNonce',
+        branded:            '$branded'
     };
 
     const getSmartWalletInstrumentQuery = () => {
@@ -185,48 +197,67 @@ function buildSmartWalletQuery() : string {
     };
 
     const fundingQuery = {
-        [ FUNDING.PAYPAL ]: getSmartWalletFundingQuery(),
-        [ FUNDING.CREDIT ]: getSmartWalletFundingQuery(),
-        [ FUNDING.CARD ]:   getSmartWalletFundingQuery()
+        [FUNDING.PAYPAL]: getSmartWalletFundingQuery(),
+        [FUNDING.CREDIT]: getSmartWalletFundingQuery(),
+        [FUNDING.CARD]:   getSmartWalletFundingQuery()
     };
 
-    return query('GetSmartWallet', params(InputTypes, {
-        smartWallet: params(Inputs, fundingQuery)
-    }));
+    return query(
+        'GetSmartWallet',
+        params(InputTypes, {
+            smartWallet: params(Inputs, fundingQuery)
+        })
+    );
 }
 
 export type WalletOptions = {|
-    logger : LoggerType,
-    clientID : string,
-    buyerCountry? : ?$Values<typeof COUNTRY>,
-    currency? : $Values<typeof CURRENCY>,
-    intent? : $Values<typeof INTENT>,
-    commit? : $Values<typeof COMMIT>,
-    vault? : $Values<typeof VAULT>,
-    disableFunding? : $ReadOnlyArray<?$Values<typeof FUNDING>>,
-    disableCard? : $ReadOnlyArray<?$Values<typeof CARD>>,
-    merchantID? : ?$ReadOnlyArray<string>,
-    buttonSessionID? : string,
-    clientAccessToken? : ?string,
-    buyerAccessToken? : ?string,
-    amount? : ?string,
-    userIDToken? : ?string,
-    userRefreshToken? : ?string,
-    paymentMethodNonce? : ?string,
-    branded? : ?boolean
+  logger : LoggerType,
+  clientID : string,
+  buyerCountry? : ?$Values<typeof COUNTRY>,
+  currency? : $Values<typeof CURRENCY>,
+  intent? : $Values<typeof INTENT>,
+  commit? : $Values<typeof COMMIT>,
+  vault? : $Values<typeof VAULT>,
+  disableFunding? : $ReadOnlyArray<?$Values<typeof FUNDING>>,
+  disableCard? : $ReadOnlyArray<?$Values<typeof CARD>>,
+  merchantID? : ?$ReadOnlyArray<string>,
+  buttonSessionID? : string,
+  clientAccessToken? : ?string,
+  buyerAccessToken? : ?string,
+  amount? : ?string,
+  userIDToken? : ?string,
+  userRefreshToken? : ?string,
+  paymentMethodNonce? : ?string,
+  branded? : ?boolean
 |};
 
 const DEFAULT_AMOUNT = '0.00';
 
 // eslint-disable-next-line complexity
-export async function resolveWallet(req : ExpressRequest, gqlBatch : GraphQLBatchCall, { logger, clientID, merchantID, buttonSessionID,
-    currency, intent, commit, vault, disableFunding, disableCard, clientAccessToken, buyerCountry, buyerAccessToken, amount = DEFAULT_AMOUNT,
-    userIDToken, userRefreshToken, paymentMethodNonce, branded } : WalletOptions) : Promise<Wallet> {
-
-        console.log('!!!!!! nonce', paymentMethodNonce);
-        console.log('!!!!!! branded', branded);
-
-
+export async function resolveWallet(
+    req : ExpressRequest,
+    gqlBatch : GraphQLBatchCall,
+    {
+        logger,
+        clientID,
+        merchantID,
+        buttonSessionID,
+        currency,
+        intent,
+        commit,
+        vault,
+        disableFunding,
+        disableCard,
+        clientAccessToken,
+        buyerCountry,
+        buyerAccessToken,
+        amount = DEFAULT_AMOUNT,
+        userIDToken,
+        userRefreshToken,
+        paymentMethodNonce,
+        branded
+    } : WalletOptions
+) : Promise<Wallet> {
     const wallet : Wallet = {
         paypal: {
             instruments: []
@@ -239,15 +270,26 @@ export async function resolveWallet(req : ExpressRequest, gqlBatch : GraphQLBatc
         }
     };
 
-
-    if (userIDToken || userRefreshToken || buyerAccessToken || paymentMethodNonce) {
+    if (
+        userIDToken ||
+    userRefreshToken ||
+    buyerAccessToken ||
+    paymentMethodNonce
+    ) {
         try {
             const result = await gqlBatch({
                 query:     buildSmartWalletQuery(),
                 variables: {
-                    clientID, merchantID, currency, amount,
-                    userIDToken, userRefreshToken, buyerAccessToken, paymentMethodNonce, branded,
-                    vetted:             false
+                    clientID,
+                    merchantID,
+                    currency,
+                    amount,
+                    userIDToken,
+                    userRefreshToken,
+                    buyerAccessToken,
+                    paymentMethodNonce,
+                    branded,
+                    vetted: false
                 },
                 accessToken: clientAccessToken,
                 timeout:     WALLET_TIMEOUT
@@ -257,10 +299,11 @@ export async function resolveWallet(req : ExpressRequest, gqlBatch : GraphQLBatc
                 throw new Error(`No smart wallet returned`);
             }
 
-            console.log('@@@@@ smart wallet', JSON.stringify(result.smartWallet));
             return result.smartWallet;
         } catch (err) {
-            logger.error(req, 'smart_wallet_error_fallback', { err: err.stack ? err.stack : err.toString() });
+            logger.error(req, 'smart_wallet_error_fallback', {
+                err: err.stack ? err.stack : err.toString()
+            });
             return wallet;
         }
     }
@@ -304,7 +347,7 @@ export async function resolveWallet(req : ExpressRequest, gqlBatch : GraphQLBatc
                 }) : null;
 
         const buyerVault = fundingElig && fundingElig.fundingEligibility;
-        
+
         if (buyerVault) {
             if (buyerVault && buyerVault.paypal && buyerVault.paypal.vaultedInstruments) {
                 for (const vaultedInstrument of buyerVault.paypal.vaultedInstruments) {
@@ -353,7 +396,6 @@ export async function resolveWallet(req : ExpressRequest, gqlBatch : GraphQLBatc
         }
 
         return wallet;
-
     } catch (err) {
         logger.error(req, 'wallet_error_fallback', { err: err.stack ? err.stack : err.toString() });
         return wallet;

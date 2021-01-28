@@ -194,13 +194,14 @@ function getFundingEligibilityParam(req : ExpressRequest) : FundingEligibilityTy
 
 
 function getPaymentMethodNonce(req : ExpressRequest) : string {
-    let nonce = req.query && req.query.paymentMethodNonce;
+    const paymentMethodNonce = req.query && req.query.paymentMethodNonce;
 
-    if (!nonce || typeof nonce !== 'string') {
+    if (!paymentMethodNonce || typeof paymentMethodNonce !== 'string') {
+        // $FlowFixMe
         return;
     }
 
-    return nonce;
+    return paymentMethodNonce;
 }
 
 
@@ -277,6 +278,7 @@ function getStyle(params : ButtonInputParams) : Style {
     return { label, period };
 }
 
+// $FlowFixMe
 export function getButtonParams(params : ButtonInputParams, req : ExpressRequest, res : ExpressResponse) : ButtonParams {
     const {
         env,
@@ -307,6 +309,8 @@ export function getButtonParams(params : ButtonInputParams, req : ExpressRequest
 
     const basicFundingEligibility = getFundingEligibilityParam(req);
     const paymentMethodNonce = getPaymentMethodNonce(req);
+
+    // $FlowFixMe
     const branded = getBranded(params);
     const riskData = getRiskDataParam(req);
     const correlationID = req.correlationId || '';
