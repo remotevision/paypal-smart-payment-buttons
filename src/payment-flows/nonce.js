@@ -44,6 +44,7 @@ function isNoncePaymentEligible({ props, payment, serviceData }) : boolean {
 
     // eslint-disable-next-line no-warning-comments
     // TODO: check if we need to loop between instruments or if we can just pick the first instrument
+    // $FlowFixMe
     const { tokenID } = wallet.card.instruments[0];
 
     if (fundingSource !== FUNDING.CARD) {
