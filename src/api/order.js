@@ -491,30 +491,30 @@ export function updateButtonClientConfig({ orderID, fundingSource, inline = fals
 }
 
 // eslint-disable-next-line no-warning-comments
-// TODO: check if nonce needs to be a type of wallet, or directly taken from wallet
+// TODO: check if paymentMethodNonce needs to be a type of wallet, or directly taken from wallet
 type PayWithNonceOptions = {|
     orderID : string,
-    nonce : ?string,
+    paymentMethodNonce : ?string,
     clientID : ?string,
     branded : boolean
 |};
 
-export function payWithNonce({ orderID, nonce, clientID, branded = true } : PayWithNonceOptions) : ZalgoPromise<mixed> {
+export function payWithNonce({ orderID, paymentMethodNonce, clientID, branded = true } : PayWithNonceOptions) : ZalgoPromise<mixed> {
     // $FlowFixMe
-    getLogger().info('nonce input params',  orderID, nonce, clientID, branded);
+    getLogger().info('paymentMethodNonce input params',  orderID, paymentMethodNonce, clientID, branded);
     return callGraphQL({
         name:  'approvePaymentWithNonce',
         query: `
             mutation ApprovePaymentWithNonce(
                 $orderID : String!
                 $clientID : String!
-                $nonce: String!
-                $branded: boolean!
+                $paymentMethodNonce: String!
+                $branded: Boolean!
             ) {
                 approvePaymentWithNonce(
                     token: $orderID
                     clientID: $clientID
-                    nonce: $nonce
+                    paymentMethodNonce: $paymentMethodNonce
                     branded: $branded
                 ) {
                     cart {
@@ -526,13 +526,13 @@ export function payWithNonce({ orderID, nonce, clientID, branded = true } : PayW
         variables: {
             orderID,
             clientID,
-            nonce,
+            paymentMethodNonce,
             branded
         },
         headers: {
             [ HEADERS.CLIENT_CONTEXT ]: orderID
         }
     }).then(data => {
-        getLogger().info('Data from paywithNonce', data);
+        getLogger().info('pay_with_paymentMethodNonce_cart_id', data.cart.cartId);
     });
 }

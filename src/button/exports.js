@@ -2,6 +2,9 @@
 
 
 import { ZalgoPromise } from 'zalgo-promise/src';
+import { querySelectorAll } from 'belter/src';
+
+import { DATA_ATTRIBUTES } from '../constants';
 
 import type { ButtonProps } from './props';
 
@@ -13,11 +16,16 @@ props : ButtonProps,
 export function setupExports({ props, isEnabled } : ExportsProps)  {
     const { createOrder, onApprove, onError, onCancel } = props;
     const { onClick, fundingSource } = props;
+
+    const fundingSources = querySelectorAll(`[${ DATA_ATTRIBUTES.FUNDING_SOURCE }]`).map(el => {
+        return el.getAttribute(DATA_ATTRIBUTES.FUNDING_SOURCE);
+    }).filter(Boolean);
+
     window.exports = {
         name:           'smart-payment-buttons',
         paymentSession: () => {
             return {
-                getAvailableFundingSources: () => fundingSource,
+                getAvailableFundingSources: () => fundingSources,
                 createOrder:                () => {
 
                     if (!isEnabled()) {

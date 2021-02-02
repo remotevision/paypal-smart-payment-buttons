@@ -11,38 +11,46 @@ function setupNonce() {
 // pass
 }
 
-function isNonceEligible({ props }) : boolean {
-    let { paymentMethodNonce } = props;
+function isNonceEligible({ props, serviceData }) : boolean {
+    const { paymentMethodNonce } = props;
+    // eslint-disable-next-line no-console
     console.log('nonce eligibility check', paymentMethodNonce);
 
-    const { wallet } = props;
+    const { wallet } = serviceData;
+
+    // eslint-disable-next-line no-console
+    console.log('wallet', wallet);
 
     if (!wallet) {
         return false;
     }
 
-    if (wallet.card.instruments.length === 0 || !wallet.card.instruments[0].tokenID) {
+    // Ensure wallet instruments are branded and have a valid tokenID.
+    if (wallet.card.instruments.length === 0 ||
+        !wallet.card.instruments.some(instrument => (instrument.tokenID && instrument.branded))) {
         return false;
     }
 
     return true;
-
-
 }
 
+function isNoncePaymentEligible({ props, payment, serviceData }) : boolean {
 
-function isNoncePaymentEligible({ props, payment }) : boolean {
-    const { wallet, branded } = props;
-    const { fundingSource } = payment;
+    const { branded } = props;
+    const { wallet } = serviceData;
 
-    // eslint-disable-next-line no-warning-comments
-    // TODO: check if we need to loop between instruments or if we can just pick the first instrument
-    const { tokenID } = wallet.card.instruments[0];
-    //TODO: check with Daniel if this needs to be paypal or card?
-    if (fundingSource !== FUNDING.PAYPAL) {
+    const { fundingSource, paymentMethodID } = payment;
+
+    // $FlowFixMe
+    const instrument  = wallet.card.instruments.find(({ tokenID })  => (tokenID === paymentMethodID));
+    // $FlowFixMe
+    const { tokenID } = instrument;
+
+    if (fundingSource !== FUNDING.CARD) {
         return false;
     }
-    if (!branded) {
+    // $FlowFixMe
+    if (!branded && !instrument.branded) {
         return false;
     }
 
@@ -50,29 +58,34 @@ function isNoncePaymentEligible({ props, payment }) : boolean {
         return false;
     }
 
-
     return true;
 }
 
-function initNonce({ props }) : PaymentFlowInstance {
+function startPaymentWithNonce(orderID, paymentMethodNonce, clientID, branded) : void {
+    getLogger().info('nonce_payment_initiated');
+
+    payWithNonce({ orderID, paymentMethodNonce, clientID, branded })
+        .catch(error => {
+            getLogger().info('nonce_payment_failed');
+            // $FlowFixMe
+            error.code = 'PAY_WITH_DIFFERENT_CARD';
+            throw error;
+        });
+}
+
+function initNonce({ props, payment }) : PaymentFlowInstance {
     const { createOrder, clientID, wallet, branded } = props;
-    let { paymentMethodNonce } = props;
+    const { paymentMethodID } = payment;
 
+    const instrument  = wallet.card.instruments.find(({ tokenID })  => (tokenID === paymentMethodID));
     // $FlowFixMe
-    getLogger().info(paymentMethodNonce);
-
-    // eslint-disable-next-line no-warning-comments
-    // TODO: remove check when reading from wallet
-    if (!paymentMethodNonce)  {
-        paymentMethodNonce = wallet.card.instruments[0].tokenID;
-    }
+    const paymentMethodNonce = instrument.tokenID;
 
     const start = () => {
-        getLogger().info('start payment with nonce');
+        // $FlowFixMe
+        getLogger().info(`start_payment_with_nonce ${ paymentMethodNonce }`);
         return createOrder().then(orderID => {
-            // $FlowFixMe
-            getLogger().info('orderID in nonce', orderID);
-            // eslint-disable-next-line no-use-before-define
+            getLogger().info(`orderID_in_nonce ${ orderID }`);
             return startPaymentWithNonce(orderID, paymentMethodNonce, clientID, branded);
         });
     };
@@ -81,23 +94,8 @@ function initNonce({ props }) : PaymentFlowInstance {
         start,
         close: promiseNoop
     };
-
 }
 
-
-function startPaymentWithNonce(orderID, paymentMethodNonce, clientID, branded) : void {
-    try {
-        // $FlowFixMe
-        getLogger().info(orderID, paymentMethodNonce, clientID, branded);
-        // $FlowFixMe
-        payWithNonce({ orderID, paymentMethodNonce, clientID, branded });
-    } catch (error) {
-        // eslint-disable-next-line no-warning-comments
-        // TODO: test this. SPB should call merchant's onError. move to constant
-        error.code = 'PAY_WITH_DIFFERENT_CARD';
-        throw error;
-    }
-}
 
 export const nonce : PaymentFlow = {
     name:              'nonce',
