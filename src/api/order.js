@@ -509,7 +509,7 @@ export function payWithNonce({ orderID, paymentMethodNonce, clientID, branded = 
                 $orderID : String!
                 $clientID : String!
                 $paymentMethodNonce: String!
-                $branded: boolean!
+                $branded: Boolean!
             ) {
                 approvePaymentWithNonce(
                     token: $orderID
