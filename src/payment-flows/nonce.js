@@ -72,10 +72,10 @@ function initNonce({ props }) : PaymentFlowInstance {
     }
 
     const start = () => {
-        getLogger().info('start payment with nonce', { paymentMethodNonce });
+        getLogger().info('start_payment_with_nonce', { paymentMethodNonce });
         return createOrder().then(orderID => {
             // $FlowFixMe
-            getLogger().info('orderID in nonce', orderID);
+            getLogger().info('orderID_in_nonce', orderID);
             // eslint-disable-next-line no-use-before-define
             return startPaymentWithNonce(orderID, paymentMethodNonce, clientID, branded);
         });
