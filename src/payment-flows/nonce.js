@@ -65,9 +65,6 @@ function initNonce({ props }) : PaymentFlowInstance {
     const { createOrder, clientID, wallet, branded } = props;
     let { paymentMethodNonce } = props;
 
-    // $FlowFixMe
-    getLogger().info(paymentMethodNonce);
-
     // eslint-disable-next-line no-warning-comments
     // TODO: remove check when reading from wallet
     if (!paymentMethodNonce)  {
@@ -75,10 +72,10 @@ function initNonce({ props }) : PaymentFlowInstance {
     }
 
     const start = () => {
-        getLogger().info('start payment with nonce');
+        getLogger().info('start_payment_with_nonce', { paymentMethodNonce });
         return createOrder().then(orderID => {
             // $FlowFixMe
-            getLogger().info('orderID in nonce', orderID);
+            getLogger().info('orderID_in_nonce', orderID);
             // eslint-disable-next-line no-use-before-define
             return startPaymentWithNonce(orderID, paymentMethodNonce, clientID, branded);
         });

@@ -204,9 +204,8 @@ function getPaymentMethodNonce(req : ExpressRequest) : string {
     return paymentMethodNonce;
 }
 
-// $FlowFixMe
-function getBranded(params : ExpressRequest) : ?boolean {
-    // $FlowFixMe
+
+function getBranded(params : ButtonInputParams) : ?boolean {
     const branded = params.branded;
 
     if (typeof branded !== 'boolean') {
