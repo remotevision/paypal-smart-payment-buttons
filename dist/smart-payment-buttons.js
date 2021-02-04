@@ -124,10 +124,16 @@ window.spb = function(modules) {
             void 0 === ua && (ua = getUserAgent());
             return /Chrome|Chromium|CriOS/.test(ua);
         }
+        function _setPrototypeOf(o, p) {
+            return (_setPrototypeOf = Object.setPrototypeOf || function(o, p) {
+                o.__proto__ = p;
+                return o;
+            })(o, p);
+        }
         function _inheritsLoose(subClass, superClass) {
             subClass.prototype = Object.create(superClass.prototype);
             subClass.prototype.constructor = subClass;
-            subClass.__proto__ = superClass;
+            _setPrototypeOf(subClass, superClass);
         }
         function _extends() {
             return (_extends = Object.assign || function(target) {
@@ -817,12 +823,6 @@ window.spb = function(modules) {
                 return o.__proto__ || Object.getPrototypeOf(o);
             })(o);
         }
-        function _setPrototypeOf(o, p) {
-            return (_setPrototypeOf = Object.setPrototypeOf || function(o, p) {
-                o.__proto__ = p;
-                return o;
-            })(o, p);
-        }
         function _isNativeReflectConstruct() {
             if ("undefined" == typeof Reflect || !Reflect.construct) return !1;
             if (Reflect.construct.sham) return !1;
@@ -1035,7 +1035,7 @@ window.spb = function(modules) {
             return Boolean(document.body) && "interactive" === document.readyState;
         }
         function urlEncode(str) {
-            return str.replace(/\?/g, "%3F").replace(/&/g, "%26").replace(/#/g, "%23").replace(/\+/g, "%2B").replace(/[=]/g, "%3D");
+            return encodeURIComponent(str);
         }
         var waitForDocumentReady = memoize((function() {
             return new promise_ZalgoPromise((function(resolve) {
@@ -1326,18 +1326,21 @@ window.spb = function(modules) {
         var LOG_LEVEL_PRIORITY = [ "error", "warn", "info", "debug" ];
         function httpTransport(_ref) {
             var url = _ref.url, method = _ref.method, headers = _ref.headers, json = _ref.json, _ref$enableSendBeacon = _ref.enableSendBeacon, enableSendBeacon = void 0 !== _ref$enableSendBeacon && _ref$enableSendBeacon;
-            var hasHeaders = headers && Object.keys(headers).length;
-            return window && window.navigator.sendBeacon && !hasHeaders && enableSendBeacon && window.Blob ? new promise_ZalgoPromise((function(resolve) {
-                var blob = new Blob([ JSON.stringify(json) ], {
-                    type: "application/json"
+            return promise_ZalgoPromise.try((function() {
+                var hasHeaders = headers && Object.keys(headers).length;
+                if (window && window.navigator.sendBeacon && !hasHeaders && enableSendBeacon && window.Blob) try {
+                    var blob = new Blob([ JSON.stringify(json) ], {
+                        type: "application/json"
+                    });
+                    return window.navigator.sendBeacon(url, blob);
+                } catch (e) {}
+                return request({
+                    url: url,
+                    method: method,
+                    headers: headers,
+                    json: json
                 });
-                resolve(window.navigator.sendBeacon(url, blob));
-            })) : request({
-                url: url,
-                method: method,
-                headers: headers,
-                json: json
-            }).then(src_util_noop);
+            })).then(src_util_noop);
         }
         function extendIfDefined(target, source) {
             for (var key in source) source.hasOwnProperty(key) && source[key] && !target[key] && (target[key] = source[key]);
@@ -4628,56 +4631,60 @@ window.spb = function(modules) {
                 console.log("nonce eligibility check", _ref.props.paymentMethodNonce);
                 var wallet = serviceData.wallet;
                 console.log("wallet", wallet);
-                return !!wallet && !(0 === wallet.card.instruments.length || !wallet.card.instruments[0].tokenID);
+                return !!wallet && !(0 === wallet.card.instruments.length || !wallet.card.instruments.some((function(instrument) {
+                    return instrument.tokenID && instrument.branded;
+                })));
             },
             isPaymentEligible: function(_ref2) {
+                var payment = _ref2.payment;
                 var branded = _ref2.props.branded;
-                var wallet = _ref2.serviceData.wallet;
-                var fundingSource = _ref2.payment.fundingSource;
-                console.log("nonce payment eligibility check", branded, wallet, fundingSource);
-                return "card" === fundingSource && !!branded && !!wallet.card.instruments[0].tokenID;
+                var fundingSource = payment.fundingSource, paymentMethodID = payment.paymentMethodID;
+                var instrument = _ref2.serviceData.wallet.card.instruments.find((function(_ref3) {
+                    return _ref3.tokenID === paymentMethodID;
+                }));
+                return !("card" !== fundingSource || !branded && !instrument.branded || !instrument.tokenID);
             },
-            init: function(_ref3) {
-                var props = _ref3.props;
-                var createOrder = props.createOrder, clientID = props.clientID, wallet = props.wallet, branded = props.branded;
-                var paymentMethodNonce = props.paymentMethodNonce;
-                logger_getLogger().info(paymentMethodNonce);
-                paymentMethodNonce || (paymentMethodNonce = wallet.card.instruments[0].tokenID);
+            init: function(_ref4) {
+                var props = _ref4.props;
+                var createOrder = props.createOrder, clientID = props.clientID, branded = props.branded;
+                var paymentMethodID = _ref4.payment.paymentMethodID;
+                var paymentMethodNonce = props.wallet.card.instruments.find((function(_ref5) {
+                    return _ref5.tokenID === paymentMethodID;
+                })).tokenID;
                 return {
                     start: function() {
-                        logger_getLogger().info("start payment with nonce");
+                        logger_getLogger().info("start_payment_with_nonce " + paymentMethodNonce);
                         return createOrder().then((function(orderID) {
-                            logger_getLogger().info("orderID in nonce", orderID);
+                            logger_getLogger().info("orderID_in_nonce " + orderID);
                             return function(orderID, paymentMethodNonce, clientID, branded) {
-                                try {
-                                    logger_getLogger().info(orderID, paymentMethodNonce, clientID, branded);
-                                    !function(_ref15) {
-                                        var _headers17;
-                                        var orderID = _ref15.orderID, paymentMethodNonce = _ref15.paymentMethodNonce, clientID = _ref15.clientID, _ref15$branded = _ref15.branded, branded = void 0 === _ref15$branded || _ref15$branded;
-                                        logger_getLogger().info("paymentMethodNonce input params", orderID, paymentMethodNonce, clientID, branded);
-                                        callGraphQL({
-                                            name: "approvePaymentWithNonce",
-                                            query: "\n            mutation ApprovePaymentWithNonce(\n                $orderID : String!\n                $clientID : String!\n                $paymentMethodNonce: String!\n                $branded: boolean!\n            ) {\n                approvePaymentWithNonce(\n                    token: $orderID\n                    clientID: $clientID\n                    paymentMethodNonce: $paymentMethodNonce\n                    branded: $branded\n                ) {\n                    cart {\n                        cartId\n                    }\n                }\n            }\n        ",
-                                            variables: {
-                                                orderID: orderID,
-                                                clientID: clientID,
-                                                paymentMethodNonce: paymentMethodNonce,
-                                                branded: branded
-                                            },
-                                            headers: (_headers17 = {}, _headers17["paypal-client-context"] = orderID, _headers17)
-                                        }).then((function(data) {
-                                            logger_getLogger().info("pay_with_paymentMethodNonce_cart_id", data.cart.cartId);
-                                        }));
-                                    }({
-                                        orderID: orderID,
-                                        paymentMethodNonce: paymentMethodNonce,
-                                        clientID: clientID,
-                                        branded: branded
-                                    });
-                                } catch (error) {
+                                logger_getLogger().info("nonce_payment_initiated");
+                                (function(_ref15) {
+                                    var _headers17;
+                                    var orderID = _ref15.orderID, paymentMethodNonce = _ref15.paymentMethodNonce, clientID = _ref15.clientID, _ref15$branded = _ref15.branded, branded = void 0 === _ref15$branded || _ref15$branded;
+                                    logger_getLogger().info("paymentMethodNonce input params", orderID, paymentMethodNonce, clientID, branded);
+                                    return callGraphQL({
+                                        name: "approvePaymentWithNonce",
+                                        query: "\n            mutation ApprovePaymentWithNonce(\n                $orderID : String!\n                $clientID : String!\n                $paymentMethodNonce: String!\n                $branded: Boolean!\n            ) {\n                approvePaymentWithNonce(\n                    token: $orderID\n                    clientID: $clientID\n                    paymentMethodNonce: $paymentMethodNonce\n                    branded: $branded\n                ) {\n                    cart {\n                        cartId\n                    }\n                }\n            }\n        ",
+                                        variables: {
+                                            orderID: orderID,
+                                            clientID: clientID,
+                                            paymentMethodNonce: paymentMethodNonce,
+                                            branded: branded
+                                        },
+                                        headers: (_headers17 = {}, _headers17["paypal-client-context"] = orderID, _headers17)
+                                    }).then((function(data) {
+                                        logger_getLogger().info("pay_with_paymentMethodNonce_cart_id", data.cart.cartId);
+                                    }));
+                                })({
+                                    orderID: orderID,
+                                    paymentMethodNonce: paymentMethodNonce,
+                                    clientID: clientID,
+                                    branded: branded
+                                }).catch((function(error) {
+                                    logger_getLogger().info("nonce_payment_failed");
                                     error.code = "PAY_WITH_DIFFERENT_CARD";
                                     throw error;
-                                }
+                                }));
                             }(orderID, paymentMethodNonce, clientID, branded);
                         }));
                     },
@@ -5830,9 +5837,7 @@ window.spb = function(modules) {
                                                         vault: vault
                                                     });
                                                 }));
-                                                console.log("smartFields", smartFields);
                                                 var confirmOrderPromise = smartFields && smartFields.confirm && createOrder().then(smartFields.confirm);
-                                                console.log("confirmOrderPromise", confirmOrderPromise);
                                                 return promise_ZalgoPromise.all([ clickPromise, startPromise, validateOrderPromise, confirmOrderPromise ]).catch((function(err) {
                                                     return promise_ZalgoPromise.try(close).then((function() {
                                                         throw err;
@@ -6256,12 +6261,15 @@ window.spb = function(modules) {
                 var props = _ref.props, isEnabled = _ref.isEnabled;
                 var _createOrder = props.createOrder, onApprove = props.onApprove, onError = props.onError, onCancel = props.onCancel;
                 var onClick = props.onClick, fundingSource = props.fundingSource;
+                var fundingSources = querySelectorAll("[data-funding-source]").map((function(el) {
+                    return el.getAttribute("data-funding-source");
+                })).filter(Boolean);
                 window.exports = {
                     name: "smart-payment-buttons",
                     paymentSession: function() {
                         return {
                             getAvailableFundingSources: function() {
-                                return fundingSource;
+                                return fundingSources;
                             },
                             createOrder: function() {
                                 if (!isEnabled()) throw new Error("Error occurred. Button not enabled.");
